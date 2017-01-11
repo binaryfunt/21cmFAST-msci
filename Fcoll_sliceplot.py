@@ -1,3 +1,5 @@
+USAGE = "USAGE (IPython): run Fcoll_sliceplot.py -i <filename1> [<filename2>...]"
+
 from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,40 +50,69 @@ maxrange = 0.1
 savefile = 0
 del_z_index = int(0)
 
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:")
+except getopt.GetoptError:
+    print USAGE
+    sys.exit(2)
+    
+for opt, arg in opts:
+    if opt in ("-u", "--u", "-h", "--h", "--help"):
+        print USAGE
+        sys.exit()
+    elif opt in ("-i", "--i"):
+        files_in = arg
+        files_in = files_in.split()
+
+if not files_in:
+    print "No files for processing... Have you included a '-i' flag before the filenames?\n" + USAGE
+    sys.exit()
+
+# Go through list of files and process each one:
+for path in files_in:
+    #path = sys.argv[i]
+    print 'Processing input file:'
+    print '  '+path
+    filename="" + path.split("/")[-1]
+
+    # DIM = int("" + path.split("_")[-2])
+    # label=str("" + path.split("_")[-1])
+    DIM = 256
+
+    if z_index < 0:
+        z_index = DIM/2
+
+    # Read in the data cube:
+    Fcoll = load_binary_data(path)
+    Fcoll.shape = (DIM, DIM, DIM)
+    Fcoll = Fcoll.reshape((DIM, DIM, DIM), order='F')
+
+    if iso_sigma > 0:
+        print "Smoothing the entire cube with a Gassian filter of width=" + str(iso_sigma)
+        Fcoll = sp.ndimage.filters.gaussian_filter(Fcoll, sigma=iso_sigma)
 
 
-path = "C:/Users/Ronnie/Documents/21cmFAST-master/Fcoll_output_file"
+    fig = plt.figure(dpi=72)
+    sub_fig = fig.add_subplot(111)
+    print "Taking a slice along the LOS direction at index="+str(z_index)
+    slice = Fcoll[:,:,z_index]
 
-DIM = 256
-z_index = DIM/2
 
-Fcoll = load_binary_data(path)
-Fcoll.shape = (DIM, DIM, DIM)
-Fcoll = Fcoll.reshape((DIM, DIM, DIM), order='F')
+    if minrange > 1e4:
+        minrange = -0.5
+    if maxrange < -1e4:
+        maxrange = 0.5
+    slice = np.log10(1 + Fcoll[:, :, 250])
+    cmap = LinearSegmentedColormap.from_list('mycmap', ['darkblue', 'black', 'red', 'yellow'])
+    norm = MidpointNormalize(midpoint=0)
+    frame1 = plt.gca()
+    frame1.axes.get_xaxis().set_ticks([])
+    frame1.axes.get_yaxis().set_ticks([])
+    frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%("300Mpc"), fontsize=20)
+    c_dens = sub_fig.imshow(slice,cmap=cmap,norm=norm)
+    c_dens.set_clim(vmin=minrange,vmax=maxrange)
+    c_bar = fig.colorbar(c_dens, orientation='vertical')
+    c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
+    tick_array = np.linspace(minrange, maxrange, 5)
 
-fig = plt.figure(dpi=72)
-sub_fig = fig.add_subplot(111)
-print "Taking a slice along the LOS direction at index="+str(z_index)
-slice = Fcoll[:,:,z_index]
-
-print "Smoothing the entire cube with a Gassian filter of width="+str(iso_sigma)
-Fcoll = sp.ndimage.filters.gaussian_filter(Fcoll, sigma=iso_sigma)
-
-if minrange > 1e4:
-    minrange = -0.5
-if maxrange < -1e4:
-    maxrange = 0.5
-slice = np.log10(1 + Fcoll[:, :, 250])
-cmap = LinearSegmentedColormap.from_list('mycmap', ['darkblue', 'black', 'red', 'yellow'])
-norm = MidpointNormalize(midpoint=0)
-frame1 = plt.gca()
-frame1.axes.get_xaxis().set_ticks([])
-frame1.axes.get_yaxis().set_ticks([])
-frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%("300Mpc"), fontsize=20)
-c_dens = sub_fig.imshow(slice,cmap=cmap,norm=norm)
-c_dens.set_clim(vmin=minrange,vmax=maxrange)
-c_bar = fig.colorbar(c_dens, orientation='vertical')
-c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
-tick_array = np.linspace(minrange, maxrange, 5)
-
-plt.show()
+    plt.show()
