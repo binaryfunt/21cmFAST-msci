@@ -84,8 +84,8 @@ for path in files_in:
 
     # Read in the data cube:
     Fcoll = load_binary_data(path)
-    Fcoll.shape = (DIM, DIM, DIM)
-    Fcoll = Fcoll.reshape((DIM, DIM, DIM), order='F')
+    Fcoll.shape = (DIM, DIM+2, DIM)
+    Fcoll = Fcoll.reshape((DIM, DIM+2, DIM), order='F')
 
     if iso_sigma > 0:
         print "Smoothing the entire cube with a Gassian filter of width=" + str(iso_sigma)
