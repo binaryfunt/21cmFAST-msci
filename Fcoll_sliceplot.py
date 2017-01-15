@@ -1,4 +1,4 @@
-USAGE = "USAGE (IPython): run Fcoll_sliceplot.py -i <filename1> [<filename2>...]"
+USAGE = "USAGE (IPython): run Fcoll_sliceplot.py [--filter=<smoothing sigma>] [--max=<max of plot>] -i <filename1> [<filename2>...]"
 
 from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
@@ -46,20 +46,24 @@ iso_sigma = 0.8
 files_in = []
 z_index = -1
 minrange = 0.
-maxrange = 0.1
+maxrange = 0.05
 savefile = 0
 del_z_index = int(0)
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:")
+    opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:", ["filter=", "max="])
 except getopt.GetoptError:
     print USAGE
     sys.exit(2)
-    
+
 for opt, arg in opts:
     if opt in ("-u", "--u", "-h", "--h", "--help"):
         print USAGE
         sys.exit()
+    elif opt in ("-f", "--f", "-filter", "--filter"):
+      iso_sigma = float(arg)
+    elif opt in ("-max", "--max"):
+        maxrange = float(arg)
     elif opt in ("-i", "--i"):
         files_in = arg
         files_in = files_in.split()
@@ -103,8 +107,8 @@ for path in files_in:
     if maxrange < -1e4:
         maxrange = 0.5
     slice = np.log10(1 + Fcoll[:, :, 250])
-    cmap = LinearSegmentedColormap.from_list('mycmap', ['darkblue', 'black', 'red', 'yellow'])
-    norm = MidpointNormalize(midpoint=0)
+    cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
+    norm = MidpointNormalize(midpoint=maxrange/2.)
     frame1 = plt.gca()
     frame1.axes.get_xaxis().set_ticks([])
     frame1.axes.get_yaxis().set_ticks([])
