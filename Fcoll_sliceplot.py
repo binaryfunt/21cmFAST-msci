@@ -46,7 +46,7 @@ iso_sigma = 0.8
 files_in = []
 z_index = -1
 minrange = 0.
-maxrange = 0.1
+maxrange = 0.05
 savefile = 0
 del_z_index = int(0)
 
@@ -55,7 +55,7 @@ try:
 except getopt.GetoptError:
     print USAGE
     sys.exit(2)
-    
+
 for opt, arg in opts:
     if opt in ("-u", "--u", "-h", "--h", "--help"):
         print USAGE
@@ -103,8 +103,8 @@ for path in files_in:
     if maxrange < -1e4:
         maxrange = 0.5
     slice = np.log10(1 + Fcoll[:, :, 250])
-    cmap = LinearSegmentedColormap.from_list('mycmap', ['darkblue', 'black', 'red', 'yellow'])
-    norm = MidpointNormalize(midpoint=0)
+    cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
+    norm = MidpointNormalize(midpoint=maxrange/2.)
     frame1 = plt.gca()
     frame1.axes.get_xaxis().set_ticks([])
     frame1.axes.get_yaxis().set_ticks([])
