@@ -199,7 +199,7 @@ for path in files_in:
         if maxrange < -1e4:
             maxrange = 0.5
         slice = np.log10(1+data1[:,:,z_index])
-        cmap = LinearSegmentedColormap.from_list('mycmap', ['darkblue', 'green', 'yellow', 'red'])
+        cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
         norm = MidpointNormalize(midpoint=0)
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
