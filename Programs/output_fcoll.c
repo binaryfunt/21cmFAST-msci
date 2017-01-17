@@ -419,7 +419,7 @@ int main(int argc, char ** argv) {
 
        /* -------- OUTPUT THE FCOLL ARRAY -------- */
 
-       sprintf(Fcoll_filename, "Fcoll_output_file");
+       sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_z%06.2f", REDSHIFT);
        F2 = fopen(Fcoll_filename, "wb");
        //fwrite(Fcoll, sizeof(float), sizeof(Fcoll), F2);
     //    mod_fwrite(Fcoll, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F2);
