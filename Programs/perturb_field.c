@@ -100,7 +100,7 @@ int process_velocity(fftwf_complex *updated, float dDdt_over_D, float REDSHIFT, 
     return -1;
   }
   if (print_box_no_padding((float *)updated, HII_DIM, F) < 0){
-    fprintf(stderr, "perturb_field: Write error occured writting deltax box!\n");
+    fprintf(stderr, "perturb_field: Write error occured writing deltax box!\n");
     fclose(F);
     return -1;
   }
@@ -425,7 +425,7 @@ int main (int argc, char ** argv){
   F=fopen(filename, "wb");
   if (EVOLVE_DENSITY_LINEARLY){
     if (print_box_no_padding((float *)updated, HII_DIM, F) < 0){
-      fprintf(stderr, "perturb_field: Write error occured writting deltax box!\n");
+      fprintf(stderr, "perturb_field: Write error occured writing deltax box!\n");
       fftwf_free(updated); fftwf_free(vx); fclose(F);
       free_ps(); return -1;
     }
@@ -471,7 +471,7 @@ int main (int argc, char ** argv){
     }
 
     if (print_box_no_padding((float *)updated, HII_DIM, F) < 0){
-      fprintf(stderr, "perturb_field: Write error occured writting deltax box!\n");
+      fprintf(stderr, "perturb_field: Write error occured writing deltax box!\n");
       fftwf_free(updated); fftwf_free(vx); fclose(F);
       free_ps(); return -1;
     }

@@ -183,7 +183,7 @@ int main(int argc, char ** argv){
   // now lets print out the k bins
   F = fopen(argv[2], "w");
   if (!F){
-    fprintf(stderr, "delta_T.c: Couldn't open file %s for writting!\n", filename);
+    fprintf(stderr, "delta_T.c: Couldn't open file %s for writing!\n", filename);
     fftwf_cleanup_threads(); return -1;
   }
   for (ct=1; ct<NUM_BINS; ct++){

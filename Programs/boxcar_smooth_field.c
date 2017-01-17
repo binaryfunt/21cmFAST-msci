@@ -86,7 +86,7 @@ int main(int argc, char ** argv){
   // now sample and print to file
   F=fopen(argv[3], "wb");
   if (!F){
-    fprintf(stderr, "smooth_field.c: Error open binary file %s for writting\nAborting...\n", argv[3]);
+    fprintf(stderr, "smooth_field.c: Error open binary file %s for writing\nAborting...\n", argv[3]);
     fftwf_free(box);
     return -1;
   }
@@ -95,7 +95,7 @@ int main(int argc, char ** argv){
       for (j=0; j<HII_DIM; j++){
 	for (k=0; k<HII_DIM; k++){
 	  if( fwrite( (float *)smoothed_box + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F)!=1){
-	    fprintf(stderr, "smooth_field.c: Error writting binary file %s\nAborting...\n", argv[3]);
+	    fprintf(stderr, "smooth_field.c: Error writing binary file %s\nAborting...\n", argv[3]);
 	    fftwf_free(box), fclose(F);
 	    return -1;
 	  }
@@ -105,7 +105,7 @@ int main(int argc, char ** argv){
   }
   else{ //fft padding
    if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_FFT_NUM_PIXELS, 1, F)!=1){
-     fprintf(stderr, "smooth_field.c: Error writting binary file %s\n", argv[3]);
+     fprintf(stderr, "smooth_field.c: Error writing binary file %s\n", argv[3]);
    }
   }
 

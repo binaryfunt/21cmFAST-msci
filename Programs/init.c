@@ -203,13 +203,13 @@ int main(int argc, char ** argv){
   adj_complex_conj(box);
 
   /***** Write out the k-box *****/
-  fprintf(stderr, "\nWritting k-space box...\n");
+  fprintf(stderr, "\nwriting k-space box...\n");
   sprintf(filename, "../Boxes/deltak_z0.00_%i_%.0fMpc", DIM, BOX_LEN);
   if (!(OUT=fopen(filename, "wb"))){
     fprintf(stderr, "init.c: Error opening %s to write to\n", filename);
   }
   else if (mod_fwrite(box, sizeof(fftwf_complex)*KSPACE_NUM_PIXELS, 1, OUT)!=1){
-    fprintf(stderr, "init.c: Write error occured writting deltak box!\n");
+    fprintf(stderr, "init.c: Write error occured writing deltak box!\n");
   }
   fclose(OUT);
 
@@ -244,13 +244,13 @@ int main(int argc, char ** argv){
   sprintf(filename, "../Boxes/smoothed_deltax_z0.00_%i_%.0fMpc", HII_DIM, BOX_LEN);
   OUT=fopen(filename, "wb");
   if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, OUT)!=1){
-    fprintf(stderr, "init.c: Write error occured writting smoothed deltax box!\n");
+    fprintf(stderr, "init.c: Write error occured writing smoothed deltax box!\n");
   }
   fclose(OUT);
 
 
   /******* PERFORM INVERSE FOURIER TRANSFORM *****************/
-  fprintf(stderr, "Getting and writting real-space box...\n");
+  fprintf(stderr, "Getting and writing real-space box...\n");
   sprintf(filename, "../Boxes/deltak_z0.00_%i_%.0fMpc", DIM, BOX_LEN);
   IN = fopen(filename, "rb");
   if (!IN){
@@ -278,7 +278,7 @@ int main(int argc, char ** argv){
     fprintf(stderr, "init.c: Error opening %s to write to\n", filename);
   }
   else if (mod_fwrite(box, sizeof(fftwf_complex)*KSPACE_NUM_PIXELS, 1, OUT)!=1){
-    fprintf(stderr, "init.c: Write error occured writting deltax box!\n");
+    fprintf(stderr, "init.c: Write error occured writing deltax box!\n");
   }
   fclose(OUT);
 
@@ -352,7 +352,7 @@ int main(int argc, char ** argv){
   sprintf(filename, "../Boxes/vxoverddot_%i_%.0fMpc", HII_DIM, BOX_LEN);
   OUT=fopen(filename, "wb");
   if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, OUT)!=1){
-    fprintf(stderr, "init.c: Write error occured writting v_x box!\n");
+    fprintf(stderr, "init.c: Write error occured writing v_x box!\n");
   }
   fclose(OUT);
 
@@ -425,7 +425,7 @@ int main(int argc, char ** argv){
   sprintf(filename, "../Boxes/vyoverddot_%i_%.0fMpc", HII_DIM, BOX_LEN);
   OUT=fopen(filename, "wb");
   if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, OUT)!=1){
-    fprintf(stderr, "init.c: Write error occured writting v_y box!\n");
+    fprintf(stderr, "init.c: Write error occured writing v_y box!\n");
   }
   fclose(OUT);
 
@@ -499,7 +499,7 @@ int main(int argc, char ** argv){
   sprintf(filename, "../Boxes/vzoverddot_%i_%.0fMpc", HII_DIM, BOX_LEN);
   OUT=fopen(filename, "wb");
   if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, OUT)!=1){
-    fprintf(stderr, "init.c: Write error occured writting v_z box!\n");
+    fprintf(stderr, "init.c: Write error occured writing v_z box!\n");
   }
   fclose(OUT);
 
@@ -657,13 +657,13 @@ int main(int argc, char ** argv){
     
 
     /***** Write out back-up k-box RHS eq. D13b *****/
-    fprintf(stderr, "\nWritting back-up k-space box...\n");
+    fprintf(stderr, "\nwriting back-up k-space box...\n");
     sprintf(filename, "../Boxes/backup_eqD13b_z0.00_%i_%.0fMpc", DIM, BOX_LEN);
     if (!(OUT=fopen(filename, "wb"))){
       fprintf(stderr, "init.c: Error opening %s to write to\n", filename);
     }
     else if (mod_fwrite(box, sizeof(fftwf_complex)*KSPACE_NUM_PIXELS, 1, OUT)!=1){
-      fprintf(stderr, "init.c: Write error occured writting deltak box!\n");
+      fprintf(stderr, "init.c: Write error occured writing deltak box!\n");
     }
     fclose(OUT);
 
@@ -748,7 +748,7 @@ int main(int argc, char ** argv){
     sprintf(filename, "../Boxes/vxoverddot_2LPT_%i_%.0fMpc", HII_DIM, BOX_LEN);
     OUT=fopen(filename, "wb");
     if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, OUT)!=1){
-      fprintf(stderr, "init.c: Write error occured writting v_x box!\n");
+      fprintf(stderr, "init.c: Write error occured writing v_x box!\n");
     }
     fclose(OUT);
 
@@ -823,7 +823,7 @@ int main(int argc, char ** argv){
     sprintf(filename, "../Boxes/vyoverddot_2LPT_%i_%.0fMpc", HII_DIM, BOX_LEN);
     OUT=fopen(filename, "wb");
     if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, OUT)!=1){
-      fprintf(stderr, "init.c: Write error occured writting v_y box!\n");
+      fprintf(stderr, "init.c: Write error occured writing v_y box!\n");
     }
     fclose(OUT);
 
@@ -897,7 +897,7 @@ int main(int argc, char ** argv){
     sprintf(filename, "../Boxes/vzoverddot_2LPT_%i_%.0fMpc", HII_DIM, BOX_LEN);
     OUT=fopen(filename, "wb");
     if (mod_fwrite(smoothed_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, OUT)!=1){
-      fprintf(stderr, "init.c: Write error occured writting v_z box!\n");
+      fprintf(stderr, "init.c: Write error occured writing v_z box!\n");
     }
     fclose(OUT);
 
