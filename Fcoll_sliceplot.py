@@ -1,4 +1,4 @@
-USAGE = "USAGE (IPython): run Fcoll_sliceplot.py [--filter=<smoothing sigma>] [--max=<max of plot>] -i <filename1> [<filename2>...]"
+USAGE = "USAGE (IPython): run Fcoll_sliceplot.py [--filter=<smoothing sigma>] [--zindex=<z index of slice>] [--max=<max of plot>] -i <filename1> [<filename2>...]"
 
 from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
@@ -51,7 +51,7 @@ savefile = 0
 del_z_index = int(0)
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:", ["filter=", "max="])
+    opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:", ["filter=", "zindex=", "max="])
 except getopt.GetoptError:
     print USAGE
     sys.exit(2)
@@ -62,6 +62,8 @@ for opt, arg in opts:
         sys.exit()
     elif opt in ("-f", "--f", "-filter", "--filter"):
       iso_sigma = float(arg)
+    elif opt in ("-zindex", "--zindex"):
+        z_index = int(arg)
     elif opt in ("-max", "--max"):
         maxrange = float(arg)
     elif opt in ("-i", "--i"):
