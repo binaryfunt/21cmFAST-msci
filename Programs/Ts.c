@@ -87,7 +87,7 @@ double freq_int_heat[NUM_FILTER_STEPS_FOR_Ts], freq_int_ion[NUM_FILTER_STEPS_FOR
   
  // open log file
  if (!(LOG = fopen("../Log_files/Ts_log", "w") ) ){
-   fprintf(stderr, "Unable to open log file for writting\nAborting...\n");
+   fprintf(stderr, "Unable to open log file for writing\nAborting...\n");
    return -1;
  }
 
@@ -122,8 +122,8 @@ double freq_int_heat[NUM_FILTER_STEPS_FOR_Ts], freq_int_ion[NUM_FILTER_STEPS_FOR
      fprintf(LOG, "Ts.c: WARNING: Unable to open output file %s\n", filename);
      destruct_heat(); return -1;
    }
-   fprintf(stderr, "Opened TS file %s for writting\n", filename);
-   fprintf(LOG, "Opened TS file %s for writting\n", filename);
+   fprintf(stderr, "Opened TS file %s for writing\n", filename);
+   fprintf(LOG, "Opened TS file %s for writing\n", filename);
 
    // read file
    for (i=0; i<HII_DIM; i++){
@@ -140,8 +140,8 @@ double freq_int_heat[NUM_FILTER_STEPS_FOR_Ts], freq_int_ion[NUM_FILTER_STEPS_FOR
 
 	// and print it out
 	if (fwrite(&TS, sizeof(float), 1, OUT)!=1){
-	  fprintf(stderr, "Ts.c: Write error occured while writting Tk box.\n");
-	  fprintf(LOG, "Ts.c: Write error occured while writting Tk box.\n");
+	  fprintf(stderr, "Ts.c: Write error occured while writing Tk box.\n");
+	  fprintf(LOG, "Ts.c: Write error occured while writing Tk box.\n");
 	  destruct_heat(); return -1;
 	 }
 
@@ -655,8 +655,8 @@ double freq_int_heat[NUM_FILTER_STEPS_FOR_Ts], freq_int_ion[NUM_FILTER_STEPS_FOR
     // output these intermediate boxes
     if ( Ts_verbose || (++zp_ct >= 10)){ // print every 10th z' evolution step, in case we need to restart
       zp_ct=0;
-      fprintf(stderr, "Writting the intermediate output at zp = %.4f, <Tk>=%f, <x_e>=%e\n", zp, Tk_ave, x_e_ave);
-      fprintf(LOG, "Writting the intermediate output at zp = %.4f, <Tk>=%f, <x_e>=%e\n", zp, Tk_ave, x_e_ave);
+      fprintf(stderr, "writing the intermediate output at zp = %.4f, <Tk>=%f, <x_e>=%e\n", zp, Tk_ave, x_e_ave);
+      fprintf(LOG, "writing the intermediate output at zp = %.4f, <Tk>=%f, <x_e>=%e\n", zp, Tk_ave, x_e_ave);
       fflush(NULL);
 
       // first Tk
@@ -667,8 +667,8 @@ double freq_int_heat[NUM_FILTER_STEPS_FOR_Ts], freq_int_ion[NUM_FILTER_STEPS_FOR
       }
       else{
 	if (mod_fwrite(Tk_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
-	  fprintf(stderr, "Ts.c: Write error occured while writting Tk box.\n");
-	  fprintf(LOG, "Ts.c: Write error occured while writting Tk box.\n");
+	  fprintf(stderr, "Ts.c: Write error occured while writing Tk box.\n");
+	  fprintf(LOG, "Ts.c: Write error occured while writing Tk box.\n");
 	}
 	fclose(F);
       }
@@ -680,8 +680,8 @@ double freq_int_heat[NUM_FILTER_STEPS_FOR_Ts], freq_int_ion[NUM_FILTER_STEPS_FOR
       }
       else{
 	if (mod_fwrite(x_e_box, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
-	  fprintf(stderr, "Ts.c: Write error occured while writting Tk box.\n");
-	  fprintf(LOG, "Ts.c: Write error occured while writting Tk box.\n");
+	  fprintf(stderr, "Ts.c: Write error occured while writing Tk box.\n");
+	  fprintf(LOG, "Ts.c: Write error occured while writing Tk box.\n");
 	}
 	fclose(F);
       }
@@ -696,8 +696,8 @@ double freq_int_heat[NUM_FILTER_STEPS_FOR_Ts], freq_int_ion[NUM_FILTER_STEPS_FOR
       }
       else{
 	if (mod_fwrite(Ts, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
-	  fprintf(stderr, "Ts.c: Write error occured while writting Tk box.\n");
-	  fprintf(LOG, "Ts.c: Write error occured while writting Tk box.\n");
+	  fprintf(stderr, "Ts.c: Write error occured while writing Tk box.\n");
+	  fprintf(LOG, "Ts.c: Write error occured while writing Tk box.\n");
 	}
 	fclose(F);
       }

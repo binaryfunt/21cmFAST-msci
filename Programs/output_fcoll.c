@@ -226,12 +226,12 @@ int main(int argc, char ** argv) {
                 sprintf(filename, "../Boxes/sphere_xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
         }
         F = fopen(filename, "wb");
-        fprintf(LOG, "Neutral fraction is %f\nNow writting xH box at %s\n", global_xH, filename);
-        fprintf(stderr, "Neutral fraction is %f\nNow writting xH box at %s\n", global_xH, filename);
-        // FOLD: check for write error occured while writting xH box
+        fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
+        fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
+        // FOLD: check for write error occured while writing xH box
         if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1){
-            fprintf(stderr, "output_fcoll.c: Write error occured while writting xH box.\n");
-            fprintf(LOG, "output_fcoll.c: Write error occured while writting xH box.\n");
+            fprintf(stderr, "output_fcoll.c: Write error occured while writing xH box.\n");
+            fprintf(LOG, "output_fcoll.c: Write error occured while writing xH box.\n");
         }
         fclose(F); fclose(LOG); fftwf_free(xH); fftwf_cleanup_threads();
         free_ps();
@@ -419,7 +419,7 @@ int main(int argc, char ** argv) {
 
        /* -------- OUTPUT THE FCOLL ARRAY -------- */
 
-       sprintf(Fcoll_filename, "Fcoll_output_file");
+       sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_z%06.2f", REDSHIFT);
        F2 = fopen(Fcoll_filename, "wb");
        //fwrite(Fcoll, sizeof(float), sizeof(Fcoll), F2);
     //    mod_fwrite(Fcoll, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F2);
@@ -553,17 +553,17 @@ int main(int argc, char ** argv) {
     }
     if (!(F = fopen(filename, "wb"))) {
         fprintf(stderr, "output_fcoll: ERROR: unable to open file %s for writing!\n", filename);
-        fprintf(LOG, "output_fcoll: ERROR: unable to open file %s for writting!\n", filename);
+        fprintf(LOG, "output_fcoll: ERROR: unable to open file %s for writing!\n", filename);
         global_xH = -1;
     }
     else {
         fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
-        fprintf(stderr, "Neutral fraction is %f\nNow writting xH box at %s\n", global_xH, filename);
+        fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
         fflush(LOG);
         if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1) {
             // FOLD: check for write error while writing xH box
-            fprintf(stderr, "output_fcoll.c: Write error occured while writting xH box.\n");
-            fprintf(LOG, "output_fcoll.c: Write error occured while writting xH box.\n");
+            fprintf(stderr, "output_fcoll.c: Write error occured while writing xH box.\n");
+            fprintf(LOG, "output_fcoll.c: Write error occured while writing xH box.\n");
             global_xH = -1;
         }
         fclose(F);

@@ -265,12 +265,12 @@ int main(int argc, char ** argv){
                 }
         }
         F = fopen(filename, "wb");
-        fprintf(LOG, "Neutral fraction is %f\nNow writting xH box at %s\n", global_xH, filename);
-        fprintf(stderr, "Neutral fraction is %f\nNow writting xH box at %s\n", global_xH, filename);
-        // FOLD: check for write error occured while writting xH box
+        fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
+        fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
+        // FOLD: check for write error occured while writing xH box
         if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1){
-            fprintf(stderr, "find_HII_bubbles.c: Write error occured while writting xH box.\n");
-            fprintf(LOG, "find_HII_bubbles.c: Write error occured while writting xH box.\n");
+            fprintf(stderr, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
+            fprintf(LOG, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
         }
         fclose(F); fclose(LOG); fftwf_free(xH); fftwf_cleanup_threads();
         free_ps(); return (int) (global_xH * 100);
@@ -897,16 +897,16 @@ int main(int argc, char ** argv){
             }
     }
     if (!(F = fopen(filename, "wb"))) {
-        fprintf(stderr, "find_HII_bubbles: ERROR: unable to open file %s for writting!\n", filename);
-        fprintf(LOG, "find_HII_bubbles: ERROR: unable to open file %s for writting!\n", filename);
+        fprintf(stderr, "find_HII_bubbles: ERROR: unable to open file %s for writing!\n", filename);
+        fprintf(LOG, "find_HII_bubbles: ERROR: unable to open file %s for writing!\n", filename);
         global_xH = -1;
     } else {
-        fprintf(LOG, "Neutral fraction is %f\nNow writting xH box at %s\n", global_xH, filename);
-        fprintf(stderr, "Neutral fraction is %f\nNow writting xH box at %s\n", global_xH, filename);
+        fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
+        fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
         fflush(LOG);
         if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
-            fprintf(stderr, "find_HII_bubbles.c: Write error occured while writting xH box.\n");
-            fprintf(LOG, "find_HII_bubbles.c: Write error occured while writting xH box.\n");
+            fprintf(stderr, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
+            fprintf(LOG, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
             global_xH = -1;
         }
         fclose(F);

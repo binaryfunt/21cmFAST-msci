@@ -291,9 +291,9 @@ int main(int argc, char ** argv){
 	sprintf(filename, "../Boxes/sphere_delta_T_no_halos_z%06.2f_nf%f_useTs%i_zetaX%.1e_alphaX%.1f_TvirminX%.1e_aveTb%06.2f_Pop%i_%i_%.0fMpc", REDSHIFT, nf, USE_TS_IN_21CM, curr_zetaX, curr_alphaX, curr_TvirX, ave, curr_Pop, HII_DIM, BOX_LEN);
     }
     F = fopen(filename, "wb");
-    fprintf(stderr, "\nWritting output delta_T box: %s\n", filename);
+    fprintf(stderr, "\nwriting output delta_T box: %s\n", filename);
     if (mod_fwrite(delta_T, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
-      fprintf(stderr, "delta_T: Write error occured while writting delta_T box.\n");
+      fprintf(stderr, "delta_T: Write error occured while writing delta_T box.\n");
     }
     fclose(F);
   }
@@ -402,9 +402,9 @@ int main(int argc, char ** argv){
       sprintf(filename, "../Boxes/sphere_delta_T_v%i_no_halos_z%06.2f_nf%f_useTs%i_zetaX%.1e_alphaX%.1f_TvirminX%.1e_aveTb%06.2f_Pop%i_%i_%.0fMpc", VELOCITY_COMPONENT, REDSHIFT, nf, USE_TS_IN_21CM, curr_zetaX,  curr_alphaX, curr_TvirX, ave,  curr_Pop, HII_DIM, BOX_LEN);
   }
   F = fopen(filename, "wb");
-  fprintf(stderr, "\nWritting output delta_T box: %s\n", filename);
+  fprintf(stderr, "\nwriting output delta_T box: %s\n", filename);
   if (mod_fwrite(delta_T, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
-    fprintf(stderr, "delta_T: Write error occured while writting delta_T box.\n");
+    fprintf(stderr, "delta_T: Write error occured while writing delta_T box.\n");
   }
   fclose(F);
 }
@@ -537,8 +537,8 @@ int main(int argc, char ** argv){
 
   F = fopen(filename, "w");
   if (!F){
-    fprintf(stderr, "delta_T.c: Couldn't open file %s for writting!\n", filename);
-    fprintf(LOG, "delta_T.c: Couldn't open file %s for writting!\n", filename);
+    fprintf(stderr, "delta_T.c: Couldn't open file %s for writing!\n", filename);
+    fprintf(LOG, "delta_T.c: Couldn't open file %s for writing!\n", filename);
     free(delta_T); fclose(LOG); free(p_box); free(k_ave); free(in_bin_ct); fftwf_free(deldel_T);
   }
   for (ct=1; ct<NUM_BINS; ct++){

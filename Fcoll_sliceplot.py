@@ -1,4 +1,4 @@
-USAGE = "USAGE (IPython): run Fcoll_sliceplot.py [--filter=<smoothing sigma>] [--max=<max of plot>] -i <filename1> [<filename2>...]"
+USAGE = "USAGE (IPython): run Fcoll_sliceplot.py [--filter=<smoothing sigma>] [--zindex=<z index of slice>] [--max=<max of plot>] -i <filename1> [<filename2>...]"
 
 from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
@@ -51,7 +51,7 @@ savefile = 0
 del_z_index = int(0)
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:", ["filter=", "max="])
+    opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:", ["filter=", "zindex=", "max="])
 except getopt.GetoptError:
     print USAGE
     sys.exit(2)
@@ -62,6 +62,8 @@ for opt, arg in opts:
         sys.exit()
     elif opt in ("-f", "--f", "-filter", "--filter"):
       iso_sigma = float(arg)
+    elif opt in ("-zindex", "--zindex"):
+        z_index = int(arg)
     elif opt in ("-max", "--max"):
         maxrange = float(arg)
     elif opt in ("-i", "--i"):
@@ -88,8 +90,8 @@ for path in files_in:
 
     # Read in the data cube:
     Fcoll = load_binary_data(path)
-    Fcoll.shape = (DIM, DIM+2, DIM)
-    Fcoll = Fcoll.reshape((DIM, DIM+2, DIM), order='F')
+    Fcoll.shape = (DIM, DIM, DIM+2)
+    Fcoll = Fcoll.reshape((DIM, DIM, DIM+2), order='F')
 
     if iso_sigma > 0:
         print "Smoothing the entire cube with a Gassian filter of width=" + str(iso_sigma)
@@ -99,24 +101,23 @@ for path in files_in:
     fig = plt.figure(dpi=72)
     sub_fig = fig.add_subplot(111)
     print "Taking a slice along the LOS direction at index="+str(z_index)
-    slice = Fcoll[:,:,z_index]
+    the_slice = np.log10(1 + Fcoll[:,:,z_index])
 
 
     if minrange > 1e4:
         minrange = -0.5
     if maxrange < -1e4:
         maxrange = 0.5
-    slice = np.log10(1 + Fcoll[:, :, 250])
     cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
     norm = MidpointNormalize(midpoint=maxrange/2.)
     frame1 = plt.gca()
     frame1.axes.get_xaxis().set_ticks([])
     frame1.axes.get_yaxis().set_ticks([])
     frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%("300Mpc"), fontsize=20)
-    c_dens = sub_fig.imshow(slice,cmap=cmap,norm=norm)
+    c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
     c_dens.set_clim(vmin=minrange,vmax=maxrange)
     c_bar = fig.colorbar(c_dens, orientation='vertical')
-    c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
+    c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
     tick_array = np.linspace(minrange, maxrange, 5)
 
     plt.show()

@@ -332,7 +332,7 @@ int main(int argc, char ** argv){
   sprintf(filename, "../Output_files/Halo_lists/halos_z%.2f_%i_%.0fMpc", REDSHIFT, DIM, BOX_LEN);
   OUT = fopen(filename, "w");
   if (!OUT){
-    fprintf(stderr, "Unable to open file %s for writting!\n", filename);
+    fprintf(stderr, "Unable to open file %s for writing!\n", filename);
     fftwf_free(box);
     free(in_halo);
     fclose(IN);
@@ -486,9 +486,9 @@ int main(int argc, char ** argv){
   // print in_halo box
   sprintf(filename, "../Boxes/in_halo_z%.2f_%i_%.0fMpc", REDSHIFT, DIM, BOX_LEN);
   OUT = fopen(filename, "wb");
-  fprintf(stderr, "Now writting in_halo box at %s\n", filename);
+  fprintf(stderr, "Now writing in_halo box at %s\n", filename);
   if (mod_fwrite(in_halo, sizeof(char)*TOT_NUM_PIXELS, 1, OUT)!=1){
-    fprintf(stderr, "find_halos.c: Write error occured while writting in_halo box.\n");
+    fprintf(stderr, "find_halos.c: Write error occured while writing in_halo box.\n");
   }
   fclose(OUT);
   */
