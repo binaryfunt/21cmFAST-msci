@@ -118,7 +118,7 @@ for path in files_in:
     c_dens = sub_fig.imshow(slice,cmap=cmap,norm=norm)
     c_dens.set_clim(vmin=minrange,vmax=maxrange)
     c_bar = fig.colorbar(c_dens, orientation='vertical')
-    c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
+    c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
     tick_array = np.linspace(minrange, maxrange, 5)
 
     plt.show()
