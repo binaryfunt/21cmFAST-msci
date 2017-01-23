@@ -56,27 +56,30 @@ for path in files_in:
     print 'Processing input file:'
     print '  '+path
     filename="" + path.split("/")[-1]
-    
+
     DIM = 256
 
     # Read in the data cube:
-    if filename=="Fcoll_output_file":
+    if filename == "Fcoll_output_file":
         Fcoll = load_binary_data(path)
-        Fcoll.shape = (DIM, DIM+2, DIM)
-        Fcoll = Fcoll.reshape((DIM, DIM+2, DIM), order='F')
-        Fcoll= Fcoll[:,:-2,:]   #slicing so same size as other boxes
+        Fcoll.shape = (DIM, DIM, DIM+2)
+        Fcoll = Fcoll.reshape((DIM, DIM, DIM+2), order='F')
+        # Slice so same size as other boxes:
+        Fcoll= Fcoll[:,:,:-2]   #slicing so same size as other boxes
+        # TODO: find out whether it should be Fcoll[:,:,1:-1] instead
+
         #print "Fcoll shape", Fcoll.shape
-        
+
         if Fcoll_iso_sigma > 0:
             print "Smoothing the entire Fcoll box with a Gassian filter of width=" + str(Fcoll_iso_sigma)
             Fcoll = sp.ndimage.filters.gaussian_filter(Fcoll, sigma=Fcoll_iso_sigma)
-            
+
     else:
         data = load_binary_data(path)
         data.shape = (DIM, DIM, DIM)
         data = data.reshape((DIM, DIM, DIM), order='F')
         #print "data shape", data.shape
-        
+
         if iso_sigma > 0
             print "Smoothing the entire other box with a Gassian filter of width=" + str(iso_sigma)
             data = sp.ndimage.filters.gaussian_filter(data, sigma=iso_sigma)
@@ -88,9 +91,9 @@ def Find_Covariance(box1, box2):
     #flatten box arrays to vectors first as np.cov only accepts vectors
     box1_f=box1.flatten()
     box2_f=box2.flatten()
-    
+
     cov_matrix=np.cov(box1_f,box2_f)
-    
+
     return cov_matrix
 
 
@@ -99,9 +102,9 @@ def Find_R(cov_matrix):
     Finds Pearson's R from covariance matrices.
     '''
     Pearson_R=cov_matrix[0,1]/((cov_matrix[0,0]*cov_matrix[1,1])**0.5)
-    
+
     return Pearson_R
-    
+
 cov=Find_Covariance(Fcoll, data)
 R=Find_R(cov)
 print "Covariance Matrix=\n", cov
