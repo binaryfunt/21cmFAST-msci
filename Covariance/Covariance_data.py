@@ -62,9 +62,9 @@ for path in files_in:
     # Read in the data cube:
     if filename=="Fcoll_output_file":
         Fcoll = load_binary_data(path)
-        Fcoll.shape = (DIM, DIM+2, DIM)
-        Fcoll = Fcoll.reshape((DIM, DIM+2, DIM), order='F')
-        Fcoll= Fcoll[:,:-2,:]   #slicing so same size as other boxes
+        Fcoll.shape = (DIM, DIM, DIM+2)
+        Fcoll = Fcoll.reshape((DIM, DIM, DIM+2), order='F')
+        Fcoll= Fcoll[:,:,:-2]   #slicing so same size as other boxes
         #print "Fcoll shape", Fcoll.shape
         
         if Fcoll_iso_sigma > 0:
@@ -77,7 +77,7 @@ for path in files_in:
         data = data.reshape((DIM, DIM, DIM), order='F')
         #print "data shape", data.shape
         
-        if iso_sigma > 0
+        if iso_sigma > 0:
             print "Smoothing the entire other box with a Gassian filter of width=" + str(iso_sigma)
             data = sp.ndimage.filters.gaussian_filter(data, sigma=iso_sigma)
 
