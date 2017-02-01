@@ -63,7 +63,7 @@ for path in files_in:
     if filename == "Fcoll_output_file":
         Fcoll = load_binary_data(path)
         Fcoll.shape = (DIM, DIM, DIM+2)
-        Fcoll = Fcoll.reshape((DIM, DIM, DIM+2), order='F')
+        # Fcoll = Fcoll.reshape((DIM, DIM, DIM+2), order='F')
         # Slice so same size as other boxes:
         Fcoll= Fcoll[:,:,:-2]   #slicing so same size as other boxes
         # TODO: find out whether it should be Fcoll[:,:,1:-1] instead

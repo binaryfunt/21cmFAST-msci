@@ -39,16 +39,16 @@ def load_binary_data(filename, dtype=np.float32):
      return _data
 
 #default arguments
-x_sigma = -1 # if negative, then do not smooth the field
-y_sigma = -1
-z_sigma = -1
+# x_sigma = -1 # if negative, then do not smooth the field
+# y_sigma = -1
+# z_sigma = -1
 iso_sigma = 0.8
 files_in = []
 z_index = -1
 minrange = 0.
 maxrange = 0.05
-savefile = 0
-del_z_index = int(0)
+# savefile = 0
+# del_z_index = int(0)
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "u:f:x:z:y:i:", ["filter=", "zindex=", "max="])
@@ -91,7 +91,6 @@ for path in files_in:
     # Read in the data cube:
     Fcoll = load_binary_data(path)
     Fcoll.shape = (DIM, DIM, DIM+2)
-    Fcoll = Fcoll.reshape((DIM, DIM, DIM+2), order='F')
 
     if iso_sigma > 0:
         print "Smoothing the entire cube with a Gassian filter of width=" + str(iso_sigma)

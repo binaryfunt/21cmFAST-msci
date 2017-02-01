@@ -125,7 +125,7 @@ for path in files_in:
     # read in the data cube located in 21cmFast/Boxes/delta_T*
     data1 = load_binary_data(path)
     data1.shape = (DIM, DIM, DIM)
-    data1 = data1.reshape((DIM, DIM, DIM), order='F')
+    # data1 = data1.reshape((DIM, DIM, DIM), order='F')
 
     # smooth the field?
     if iso_sigma > 0:
