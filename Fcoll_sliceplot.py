@@ -101,7 +101,11 @@ for path in files_in:
     fig = plt.figure(dpi=72)
     sub_fig = fig.add_subplot(111)
     print "Taking a slice along the LOS direction at index="+str(z_index)
+<<<<<<< HEAD
     the_slice = np.log10(1 + Fcoll[:, :, z_index])
+=======
+    the_slice = np.log10(1 + Fcoll[:,:,z_index])
+>>>>>>> t_test
 
 
     if minrange > 1e4:
@@ -117,7 +121,7 @@ for path in files_in:
     c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
     c_dens.set_clim(vmin=minrange,vmax=maxrange)
     c_bar = fig.colorbar(c_dens, orientation='vertical')
-    c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
+    c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
     tick_array = np.linspace(minrange, maxrange, 5)
 
     plt.show()

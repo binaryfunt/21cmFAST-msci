@@ -1,8 +1,4 @@
-USAGE = "USAGE (IPython): run Fcoll_sliceplot.py [--filter=<smoothing sigma>] -i <Fcoll_output_file> -i <other_box>"
-
-#The binary file containing the Fcoll has to be called "Fcoll_output_file" exactly in the input.
-#My example input "run Covariance_data.py -i ../21cmFAST_Fcoll_fullsim/Run1_z9/Fcoll_output_file -i ../21cmFAST_Fcoll_fullsim/Run1_z9/Boxes/xH_nohalos_z009.00_nf0.767682_eff20.0_effPLindex0.0_HIIfilter1_Mmin4.9e+08_RHIImax20_256_300Mpc"
-#haven't tested the -f inputs
+USAGE = "USAGE (IPython): run Fcoll_sliceplot.py [--filter=<smoothing sigma>] [--max=<max of plot>] -i <filename1> [<filename2>...]"
 
 import numpy as np
 import scipy as sp
@@ -25,9 +21,10 @@ def load_binary_data(filename, dtype=np.float32):
          _data = _data.byteswap()
      return _data
 
-Fcoll_iso_sigma=0.8
-iso_sigma = 0.8 #default adjusted by -f in input
+Fcoll_iso_sigma=0.8  #default for the fcoll boxes
+iso_sigma = 0. #for the other boxes
 files_in = []
+z_index = -1
 savefile = 0
 del_z_index = int(0)
 
@@ -42,7 +39,7 @@ for opt, arg in opts:
         print USAGE
         sys.exit()
     elif opt in ("-f", "--f", "-filter", "--filter"):
-      iso_sigma = float(arg)
+      Fcoll_iso_sigma = float(arg)
     elif opt in ("-i", "--i"):
         files_in.append(arg)
         #files_in = files_in.split()
@@ -59,19 +56,21 @@ for path in files_in:
 
     DIM = 256
 
+    if z_index < 0:
+        z_index = DIM/2
+
     # Read in the data cube:
     if filename == "Fcoll_output_file":
         Fcoll = load_binary_data(path)
         Fcoll.shape = (DIM, DIM, DIM+2)
         Fcoll = Fcoll.reshape((DIM, DIM, DIM+2), order='F')
         # Slice so same size as other boxes:
-        Fcoll= Fcoll[:,:,:-2]   #slicing so same size as other boxes
+        Fcoll= Fcoll[:,:,:-2]
         # TODO: find out whether it should be Fcoll[:,:,1:-1] instead
 
-        #print "Fcoll shape", Fcoll.shape
 
         if Fcoll_iso_sigma > 0:
-            print "Smoothing the entire Fcoll box with a Gassian filter of width=" + str(Fcoll_iso_sigma)
+            print "Smoothing the entire Fcoll cube with a Gaussian filter of width=" + str(Fcoll_iso_sigma)
             Fcoll = sp.ndimage.filters.gaussian_filter(Fcoll, sigma=Fcoll_iso_sigma)
 
     else:
@@ -88,7 +87,7 @@ def Find_Covariance(box1, box2):
     '''
     Finds covariance matrix between the two boxes.
     '''
-    #flatten box arrays to vectors first as np.cov only accepts vectors
+    #flatten box arrays to vectors first
     box1_f=box1.flatten()
     box2_f=box2.flatten()
 
@@ -109,3 +108,6 @@ cov=Find_Covariance(Fcoll, data)
 R=Find_R(cov)
 print "Covariance Matrix=\n", cov
 print "R=", R
+
+#f=open('data3.txt','a')
+#f.write(str(R)+"\n")
