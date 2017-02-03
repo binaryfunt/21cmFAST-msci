@@ -108,7 +108,7 @@ def is_Fcoll(data, dim):
     """
     Check if the data is the Fcoll array based on its length
     """
-    if len(data) == dim**2 * (dim + 2)**2:
+    if len(data) == dim**2 * (dim + 2):
         return True
     elif len(data) == dim**3:
         return False
@@ -167,8 +167,8 @@ for path in files_in:
         z_index = DIM/2
 
     data1 = load_binary_data(path)
-    data1 = reshape_data(data1)
-    data1 = smooth_field(data1)
+    data1 = reshape_data(data1, DIM)
+    data1 = smooth_field(data1, iso_sigma, x_sigma, y_sigma, z_sigma)
 
     fig = plt.figure(dpi=72)
     sub_fig = fig.add_subplot(111)
@@ -202,7 +202,7 @@ for path in files_in:
         tick_array = np.linspace(minrange, maxrange, 8)
 
     # check if it is a neutral fraction box
-    elif basename(filename)[0:3]=='xH_':
+    elif basename(filename)[0:3] == 'xH_':
         if minrange > 1e4:
             minrange = 0
         if maxrange < -1e4:
@@ -238,7 +238,26 @@ for path in files_in:
         c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 5)
 
-    
+    # check it is an Fcoll box
+    elif basename(filename)[0:18] == 'Fcoll_output_file_':
+        the_slice = np.log10(1 + the_slice)
+        if minrange > 1e4:
+            minrange = 0.
+        if maxrange < -1e4:
+            maxrange = 0.05
+        cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
+        norm = MidpointNormalize(midpoint=maxrange/2.)
+        frame1 = plt.gca()
+        frame1.axes.get_xaxis().set_ticks([])
+        frame1.axes.get_yaxis().set_ticks([])
+        frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%("300Mpc"), fontsize=20)
+        c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
+        c_dens.set_clim(vmin=minrange,vmax=maxrange)
+        c_bar = fig.colorbar(c_dens, orientation='vertical')
+        c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
+        tick_array = np.linspace(minrange, maxrange, 5)
+
+
     c_bar.set_ticks(tick_array)
 
     for t in c_bar.ax.get_yticklabels():
