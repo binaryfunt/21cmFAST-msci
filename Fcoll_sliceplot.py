@@ -95,17 +95,13 @@ for path in files_in:
 
     if iso_sigma > 0:
         print "Smoothing the entire cube with a Gassian filter of width=" + str(iso_sigma)
-        Fcoll = sp.ndimage.filters.gaussian_filter(Fcoll, sigma=iso_sigma)
+        Fcoll = sp.ndimage.filters.uniform_filter(Fcoll, size=iso_sigma)
 
 
     fig = plt.figure(dpi=72)
     sub_fig = fig.add_subplot(111)
     print "Taking a slice along the LOS direction at index="+str(z_index)
-<<<<<<< HEAD
     the_slice = np.log10(1 + Fcoll[:, :, z_index])
-=======
-    the_slice = np.log10(1 + Fcoll[:,:,z_index])
->>>>>>> t_test
 
 
     if minrange > 1e4:
