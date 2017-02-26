@@ -140,6 +140,8 @@ def smooth_field(data, iso_sigma, x_sigma, y_sigma, z_sigma):
     if iso_sigma > 0:
         print "Smoothing the entire cube with a Gassian filter of width="+str(iso_sigma)
         data =  sp.ndimage.filters.gaussian_filter(data, sigma=iso_sigma)
+        # k=Create_Kernel(iso_sigma)
+        # data = sp.ndimage.convolve(data, k, mode='constant', cval=0.0)
     else:
         if x_sigma > 0:
             print "Smoothing along the x (horizontal) axis with a Gassian filter of width="+str(x_sigma)
@@ -152,6 +154,20 @@ def smooth_field(data, iso_sigma, x_sigma, y_sigma, z_sigma):
             data = sp.ndimage.filters.gaussian_filter1d(data, sigma=z_sigma, axis=2)
     return data
 
+
+def Create_Kernel(radius):
+    '''
+    Creates 3d spherical kernel. Radius converted to int (rounds down) and made positive.
+    '''
+    radius=int(np.abs(radius))
+
+    kernel_matrix = np.zeros((2*radius+1, 2*radius+1, 2*radius+1))
+    x,y,z = np.ogrid[-radius:radius+1, -radius:radius+1, -radius:radius+1]
+    mask = x**2 + y**2 + z**2 <= radius**2
+    kernel_matrix[mask] = 1
+    kernel_matrix=kernel_matrix/kernel_matrix.sum()
+
+    return kernel_matrix
 
 
 # go through list of files and process each one
