@@ -2,7 +2,7 @@
 # SIMPLEST USAGE: python sliceplot.py -i file1 file2 file3...
 #
 # More complex options:
-USAGE = "USAGE: python sliceplot.py [--savearray] [--zindex=<z-index of slice>] [--delzindex=<offset for subtracting image>] [--filter=<smoothing sigma>] [--filterx=<x-axis smoothing sigma>] [--filtery=<y-axis smoothing sigma>] [--filterz=<z-axis smoothing sigma>] [--min=<min of plot>] [--max=<max of plot>] -i <filename1> <filename2>..."
+USAGE = "USAGE: python sliceplot.py [--savearray] [--zindex=<z-index of slice>] [--delzindex=<offset for subtracting image>] [--filter=<smoothing sigma>] [--filterx=<x-axis smoothing sigma>] [--filtery=<y-axis smoothing sigma>] [--filterz=<z-axis smoothing sigma>] [--min=<min of plot>] [--max=<max of plot>] -i '<filename1> <filename2>...'"
 
 ###### LIST OF OPTIONAL ARGUMENTS:
 ###  --savearray is a flag indicating you want to also save the 2D slice as a .npy file.
@@ -103,112 +103,159 @@ if not files_in:
     print "No files for processing... Have you included a '-i' flag before the filenames?\n"+USAGE
     sys.exit()
 
+
+def is_Fcoll(data, dim):
+    """
+    Check if the data is the Fcoll array based on its length
+    """
+    if len(data) == dim**2 * (dim + 2):
+        return True
+    elif len(data) == dim**3:
+        return False
+    else:
+        raise ValueError("Dimensions of data do not match known types")
+
+def reshape_data(data, dim):
+    """
+    Reshapes the data depending on its dimensions
+    """
+    if is_Fcoll(data, dim):
+        data.shape = (dim, dim, dim + 2)
+        data = data[:,:,:-2]  # slice so same size as other boxes
+    else:
+        data.shape = (dim, dim, dim)
+    return data
+
+def smooth_field(data, iso_sigma, x_sigma, y_sigma, z_sigma):
+    """
+    Smooth the field if any of the smoothing parameters are positive
+    """
+    if iso_sigma > 0:
+        print "Smoothing the entire cube with a Gassian filter of width="+str(iso_sigma)
+        data =  sp.ndimage.filters.gaussian_filter(data, sigma=iso_sigma)
+    else:
+        if x_sigma > 0:
+            print "Smoothing along the x (horizontal) axis with a Gassian filter of width="+str(x_sigma)
+            data =  sp.ndimage.filters.gaussian_filter1d(data, sigma=x_sigma, axis=1)
+        if y_sigma > 0:
+            print "Smoothing along the y (vertical) axis with a Gassian filter of width="+str(y_sigma)
+            data = sp.ndimage.filters.gaussian_filter1d(data, sigma=y_sigma, axis=0)
+        if z_sigma > 0:
+            print "Smoothing along the z (line of sight) axis with a Gassian filter of width="+str(z_sigma)
+            data = sp.ndimage.filters.gaussian_filter1d(data, sigma=z_sigma, axis=2)
+    return data
+
+
+
 # go through list of files and process each one
 for path in files_in:
     #path = sys.argv[i]
     print 'Processing input file:'
-    print '  '+path
-    filename="" + path.split("/")[-1]
+    print '  ' + path
+    filename = "" + path.split("/")[-1]
 
     # lightcone?
-    if basename(filename)[-11:]=='lighttravel':
+    if basename(filename)[-11:] == 'lighttravel':
         DIM = int("" + path.split("_")[-3])
-        label=str("" + path.split("_")[-2])
+        label = str("" + path.split("_")[-2])
 
     else:
         DIM = int("" + path.split("_")[-2])
-        label=str("" + path.split("_")[-1])
+        label = str("" + path.split("_")[-1])
 
     if z_index < 0:
         z_index = DIM/2
 
-    # read in the data cube located in 21cmFast/Boxes/delta_T*
     data1 = load_binary_data(path)
-    data1.shape = (DIM, DIM, DIM)
-    # data1 = data1.reshape((DIM, DIM, DIM), order='F')
 
-    # smooth the field?
-    if iso_sigma > 0:
-        print "Smoothing the entire cube with a Gassian filter of width="+str(iso_sigma)
-        data1 = sp.ndimage.filters.gaussian_filter(data1, sigma=iso_sigma)
-    else:
-        if x_sigma > 0:
-            print "Smoothing along the x (horizontal) axis with a Gassian filter of width="+str(x_sigma)
-            data1 = sp.ndimage.filters.gaussian_filter1d(data1, sigma=x_sigma, axis=1)
-        if y_sigma > 0:
-            print "Smoothing along the y (vertical) axis with a Gassian filter of width="+str(y_sigma)
-            data1 = sp.ndimage.filters.gaussian_filter1d(data1, sigma=y_sigma, axis=0)
-        if z_sigma > 0:
-            print "Smoothing along the z (line of sight) axis with a Gassian filter of width="+str(z_sigma)
-            data1 = sp.ndimage.filters.gaussian_filter1d(data1, sigma=z_sigma, axis=2)
-
+    data1 = reshape_data(data1, DIM)
+    data1 = smooth_field(data1, iso_sigma, x_sigma, y_sigma, z_sigma)
 
     fig = plt.figure(dpi=72)
     sub_fig = fig.add_subplot(111)
     print "Taking a slice along the LOS direction at index="+str(z_index)
-    slice = data1[:,:,z_index]
+    the_slice = data1[:,:,z_index]
 
     if del_z_index: #difference image is wanted
         other_z_index = int(z_index+del_z_index)
         print "Subtracting the slice at index="+str(other_z_index)
-        slice = slice - data1[:,:,other_z_index]
+        the_slice = the_slice - data1[:,:,other_z_index]
 
 
     # check box type to determine default plotting options
     # check if it is a 21cm brightness temperature box
-    if basename(filename)[0:3]=='del':
+    if basename(filename)[0:3] == 'del':
         if minrange > 1e4:
             minrange = -210
         if maxrange < -1e4:
             maxrange = 30
         # cmap = LinearSegmentedColormap.from_list('mycmap', ['yellow','red','black','green','blue'])
-        cmap = LinearSegmentedColormap.from_list('mycmap', ['cyan','blue','black','red','orange'])
+        cmap = LinearSegmentedColormap.from_list('mycmap', ['cyan','blue','black','red','yellow'])
         norm = MidpointNormalize(midpoint=0)
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
         frame1.axes.get_yaxis().set_ticks([])
         frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
-        c_dens = sub_fig.imshow(slice,cmap=cmap,norm=norm)
+        c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
         c_bar = fig.colorbar(c_dens, orientation='vertical')
         c_bar.set_label(r'${\rm \delta T_b [\mathrm{mK}]}$', fontsize=24, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 8)
 
     # check if it is a neutral fraction box
-    elif basename(filename)[0:3]=='xH_':
+    elif basename(filename)[0:3] == 'xH_':
         if minrange > 1e4:
             minrange = 0
         if maxrange < -1e4:
             maxrange = 1
-        cmap = LinearSegmentedColormap.from_list('mycmap', ['white','black'])
+        cmap = LinearSegmentedColormap.from_list('mycmap', ['black','white'])
         norm = MidpointNormalize(midpoint=0.5)
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
         frame1.axes.get_yaxis().set_ticks([])
         frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
-        c_dens = sub_fig.imshow(slice,cmap=cmap,norm=norm)
+        c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
         c_bar = fig.colorbar(c_dens, orientation='vertical')
         c_bar.set_label(r'${\rm x_{HI}}$', fontsize=24, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 6)
 
     # check it is a density box
-    elif basename(filename)[0:3]=='upd':
+    elif basename(filename)[0:3] == 'upd':
         if minrange > 1e4:
             minrange = -0.5
         if maxrange < -1e4:
             maxrange = 0.5
-        slice = np.log10(1+data1[:,:,z_index])
+        the_slice = np.log10(1+data1[:,:,z_index])
         cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
         norm = MidpointNormalize(midpoint=0)
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
         frame1.axes.get_yaxis().set_ticks([])
         frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
-        c_dens = sub_fig.imshow(slice,cmap=cmap,norm=norm)
+        c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
         c_bar = fig.colorbar(c_dens, orientation='vertical')
         c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
+        tick_array = np.linspace(minrange, maxrange, 5)
+
+    # check it is an Fcoll box
+    elif basename(filename)[0:18] == 'Fcoll_output_file_':
+        the_slice = np.log10(1 + the_slice)
+        if minrange > 1e4:
+            minrange = 0.
+        if maxrange < -1e4:
+            maxrange = 0.05
+        cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
+        norm = MidpointNormalize(midpoint=maxrange/2.)
+        frame1 = plt.gca()
+        frame1.axes.get_xaxis().set_ticks([])
+        frame1.axes.get_yaxis().set_ticks([])
+        frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%("300Mpc"), fontsize=20)
+        c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
+        c_dens.set_clim(vmin=minrange,vmax=maxrange)
+        c_bar = fig.colorbar(c_dens, orientation='vertical')
+        c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 5)
 
 
@@ -226,4 +273,4 @@ for path in files_in:
 
     # do we want to save the array file?
     if savefile:
-        np.save(filename+endstr, slice)
+        np.save(filename+endstr, the_slice)

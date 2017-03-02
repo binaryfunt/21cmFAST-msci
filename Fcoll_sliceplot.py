@@ -94,6 +94,7 @@ for path in files_in:
 
     if iso_sigma > 0:
         print "Smoothing the entire cube with a Gassian filter of width=" + str(iso_sigma)
+        # Fcoll = sp.ndimage.filters.uniform_filter(Fcoll, size=iso_sigma)
         Fcoll = sp.ndimage.filters.gaussian_filter(Fcoll, sigma=iso_sigma)
 
 
