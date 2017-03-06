@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import sys, getopt
 
-USAGE = "USAGE: Fcoll_histogram.py -i <Fcoll data file> [--number=<number of bins>]"
+USAGE = "USAGE: Fcoll_histogram.py -i <Fcoll data file> [--number=<number of bins>] [--loglog]"
 
 file_in = ""
 number = 50
+log_log = False
 
 def load_binary_data(filename, dtype=np.float32):
      """
@@ -21,12 +22,21 @@ def load_binary_data(filename, dtype=np.float32):
        _data = _data.byteswap()
      return _data
 
+def histogram(data, number):
+    _freq, _bin_edges = np.histogram(data, bins=number)
+    _bin_centres = (_bin_edges[:-1] + _bin_edges[1:])/2.
+    return _freq, _bin_centres
+
+def monomial(x, a, k):
+    return a*x**k
+
+
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "h:i:n:", ["number="])
+    opts, args = getopt.getopt(sys.argv[1:], "h:i:n:", ["number=", "loglog"])
 except getopt.GetoptError:
     print USAGE
     sys.exit(2)
-# print opts, args
+print opts, args
 for opt, arg in opts:
     if opt in ("-h", "--h", "--help"):
         print USAGE
@@ -35,6 +45,8 @@ for opt, arg in opts:
         file_in = arg
     elif opt in ("-n", "--number"):
         number = int(arg)
+    elif opt in ("--loglog", "--log"):
+        log_log = True
 if file_in == "":
     print USAGE
     sys.exit()
@@ -46,14 +58,28 @@ Fcoll = load_binary_data(file_in)
 
 print "Number of bins:", number
 
+# n, bins, patches = plt.hist(Fcoll, number, histtype='step')
+freq, bin_centres = histogram(Fcoll, number)
+
+initial_guess = [1e7, -2]
+
+popt, pcov = curve_fit(monomial, bin_centres[1:-1], freq[1:-1], p0=initial_guess)
+# N.B. We ignore the first and last bins in the fitting
+
+print "Fitted a =", popt[0]
+print "Fitted k =", popt[1]
+
 fig = plt.figure()
 ax = plt.subplot()
 
-n, bins, patches = plt.hist(Fcoll, number)
+plt.plot(bin_centres, freq, 'bo', label="Data")
+plt.plot(bin_centres, monomial(bin_centres, *popt), 'r-', label="Fit")
 
 plt.xlabel("Collapse fraction")
 plt.ylabel("Frequency")
-ax.set_yscale("log")
-ax.set_xscale("log")
+if log_log == True:
+    ax.set_yscale("log")
+    ax.set_xscale("log")
+plt.legend()
 
 plt.show()
