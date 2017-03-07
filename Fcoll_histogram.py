@@ -68,6 +68,8 @@ popt, pcov = curve_fit(monomial, bin_centres[1:-1], freq[1:-1], p0=initial_guess
 
 print "Fitted a =", popt[0]
 print "Fitted k =", popt[1]
+print 100. * float(freq[0]) / float(sum(freq)), "% in 1st bin"
+print 100. * float(freq[-1]) / float(sum(freq)), "% in last bin"
 
 fig = plt.figure()
 ax = plt.subplot()
