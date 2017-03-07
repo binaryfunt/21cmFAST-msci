@@ -210,30 +210,8 @@ int main(int argc, char ** argv) {
         fprintf(LOG, "The ST mean collapse fraction is %e, which is much smaller than the effective critical collapse fraction of %e\n I will just declare everything to be neutral\n", mean_f_coll_st, f_coll_crit);
 
         // find the neutral fraction:
-        init_heat();
-        global_xH = 1 - xion_RECFAST(REDSHIFT, 0);;
-        destruct_heat();
-        for (ct = 0; ct < HII_TOT_NUM_PIXELS; ct++) {
-            xH[ct] = global_xH;
-        }
-
-        // print out the xH box
-        switch(FIND_BUBBLE_ALGORITHM) {
-            case 2:
-                sprintf(filename, "../Boxes/xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
-                break;
-            default:
-                sprintf(filename, "../Boxes/sphere_xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
-        }
-        F = fopen(filename, "wb");
-        fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
-        fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
-        // FOLD: check for write error occured while writing xH box
-        if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1){
-            fprintf(stderr, "output_fcoll.c: Write error occured while writing xH box.\n");
-            fprintf(LOG, "output_fcoll.c: Write error occured while writing xH box.\n");
-        }
-        fclose(F); fclose(LOG); fftwf_free(xH); fftwf_cleanup_threads();
+        global_xH = 1;
+        fftwf_free(xH); fftwf_cleanup_threads();
         free_ps();
         return (int) (global_xH * 100);
     }
@@ -309,6 +287,7 @@ int main(int argc, char ** argv) {
     erfc_denom_cell = 1; //dummy value
     R = fmin(MFP, L_FACTOR*BOX_LEN);
     LAST_FILTER_STEP = 0;
+    fprintf(stderr, "Filtering (using excursion set formulism (?))...\n");
     while (!LAST_FILTER_STEP) {//(R > (cell_length_factor*BOX_LEN/(HII_DIM+0.0))){
         if ( ((R/DELTA_R_HII_FACTOR) <= (cell_length_factor*BOX_LEN/(float)HII_DIM)) || ((R/DELTA_R_HII_FACTOR) <= R_BUBBLE_MIN) ){
             LAST_FILTER_STEP = 1;
@@ -417,18 +396,8 @@ int main(int argc, char ** argv) {
         //     fprintf(stderr, "Last filter %i, R_filter=%f, fcoll=%f, ST_over_PS=%f, mean normalized fcoll=%f\n", LAST_FILTER_STEP, R, f_coll, ST_over_PS, f_coll*ST_over_PS);
 
 
-       /* -------- OUTPUT THE FCOLL ARRAY -------- */
-       sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_BEFORE_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
-       F2 = fopen(Fcoll_filename, "wb");
-       //fwrite(Fcoll, sizeof(float), sizeof(Fcoll), F2);
-    //    mod_fwrite(Fcoll, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F2);
-       mod_fwrite(Fcoll, sizeof(float)*HII_TOT_FFT_NUM_PIXELS, 1, F2);
-       fclose(F2);
-
-
-
         /************  MAIN LOOP THROUGH THE BOX **************/
-        fprintf(LOG, "start of main lopp scroll, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
+        fprintf(LOG, "start of main loop scroll, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
         fflush(LOG);
         // now lets scroll through the filtered box
         ave_xHI_xrays = ave_den = ave_fcoll = std_xrays = 0;
@@ -536,46 +505,15 @@ int main(int argc, char ** argv) {
     }
 
 
-    /* -------- OUTPUT THE FCOLL ARRAY AGAIN -------- */
-    sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_AFTER_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+    /* -------- OUTPUT THE FCOLL ARRAY -------- */
+    sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+    fprintf(stderr, "Writing Fcoll box\n");
+    fprintf(LOG, "Writing Fcoll box\n");
     F2 = fopen(Fcoll_filename, "wb");
     mod_fwrite(Fcoll, sizeof(float)*HII_TOT_FFT_NUM_PIXELS, 1, F2);
     fclose(F2);
 
 
-
-    // Find the neutral fraction:
-    global_xH = 0;
-    for (ct = 0; ct < HII_TOT_NUM_PIXELS; ct++){
-        global_xH += xH[ct];
-    }
-    global_xH /= (float)HII_TOT_NUM_PIXELS;
-
-    // Print out the xH box:
-    switch(FIND_BUBBLE_ALGORITHM) {
-        case 2:
-            sprintf(filename, "../Boxes/xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
-            break;
-        default:
-            sprintf(filename, "../Boxes/sphere_xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
-    }
-    if (!(F = fopen(filename, "wb"))) {
-        fprintf(stderr, "output_fcoll: ERROR: unable to open file %s for writing!\n", filename);
-        fprintf(LOG, "output_fcoll: ERROR: unable to open file %s for writing!\n", filename);
-        global_xH = -1;
-    }
-    else {
-        fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
-        fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
-        fflush(LOG);
-        if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1) {
-            // FOLD: check for write error while writing xH box
-            fprintf(stderr, "output_fcoll.c: Write error occured while writing xH box.\n");
-            fprintf(LOG, "output_fcoll.c: Write error occured while writing xH box.\n");
-            global_xH = -1;
-        }
-        fclose(F);
-    }
 
     // Deallocate:
     fftwf_cleanup_threads();
