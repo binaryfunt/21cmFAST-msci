@@ -267,7 +267,6 @@ int main(int argc, char ** argv){
         F = fopen(filename, "wb");
         fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
         fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
-        // FOLD: check for write error occured while writing xH box
         if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1){
             fprintf(stderr, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
             fprintf(LOG, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
@@ -301,6 +300,7 @@ int main(int argc, char ** argv){
             fclose(LOG); fftwf_free(xH);  fftwf_cleanup_threads();
             free_ps(); fftwf_free(xe_filtered); fftwf_free(xe_unfiltered); return -1;
         }
+        // Check for read error while reading xe box:
         for (i = 0; i < HII_DIM; i++) {
             for (j = 0; j < HII_DIM; j++) {
                 for (k = 0; k < HII_DIM; k++) {
@@ -508,8 +508,8 @@ int main(int argc, char ** argv){
         f_coll = 0;
         if (LAST_FILTER_STEP) {
             sprintf(filename, "../Boxes/updated_smoothed_deltax_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
-            // FOLD: check if able to open file
-            if (!(F = fopen(filename, "rb"))) {
+            F = fopen(filename, "rb");
+            if (!F) {
                 fprintf(stderr, "find_HII_bubbles: ERROR: unable to open file %s\n", filename);
                 fprintf(LOG, "find_HII_bubbles: ERROR: unable to open file %s\n", filename);
                 fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads();
@@ -896,7 +896,8 @@ int main(int argc, char ** argv){
                 sprintf(filename, "../Boxes/sphere_xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
             }
     }
-    if (!(F = fopen(filename, "wb"))) {
+    F = fopen(filename, "wb");
+    if (!F) {
         fprintf(stderr, "find_HII_bubbles: ERROR: unable to open file %s for writing!\n", filename);
         fprintf(LOG, "find_HII_bubbles: ERROR: unable to open file %s for writing!\n", filename);
         global_xH = -1;
