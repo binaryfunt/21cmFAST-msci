@@ -418,8 +418,7 @@ int main(int argc, char ** argv) {
 
 
        /* -------- OUTPUT THE FCOLL ARRAY -------- */
-
-       sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+       sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_BEFORE_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
        F2 = fopen(Fcoll_filename, "wb");
        //fwrite(Fcoll, sizeof(float), sizeof(Fcoll), F2);
     //    mod_fwrite(Fcoll, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F2);
@@ -535,6 +534,15 @@ int main(int argc, char ** argv) {
 
         R /= DELTA_R_HII_FACTOR;
     }
+
+
+    /* -------- OUTPUT THE FCOLL ARRAY AGAIN -------- */
+    sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_AFTER_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+    F2 = fopen(Fcoll_filename, "wb");
+    mod_fwrite(Fcoll, sizeof(float)*HII_TOT_FFT_NUM_PIXELS, 1, F2);
+    fclose(F2);
+
+
 
     // Find the neutral fraction:
     global_xH = 0;
