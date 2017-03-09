@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import sys, getopt
 
-USAGE = "USAGE: Fcoll_histogram.py -i <Fcoll data file> [--number=<number of bins>] [--loglog]"
+USAGE = "USAGE: Fcoll_histogram.py -i <Fcoll data file> [--number=<number of bins>] [--loglog] [--logy]"
 
 file_in = ""
 number = 50
 log_log = False
+log_y = False
 
 def load_binary_data(filename, dtype=np.float32):
      """
@@ -32,7 +33,7 @@ def monomial(x, a, k):
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "h:i:n:", ["number=", "loglog"])
+    opts, args = getopt.getopt(sys.argv[1:], "h:i:n:", ["number=", "loglog", "logy"])
 except getopt.GetoptError:
     print USAGE
     sys.exit(2)
@@ -47,6 +48,8 @@ for opt, arg in opts:
         number = int(arg)
     elif opt in ("--loglog", "--log"):
         log_log = True
+    elif opt in ("--logy"):
+        log_y = True
 if file_in == "":
     print USAGE
     sys.exit()
@@ -82,6 +85,8 @@ plt.ylabel("Frequency")
 if log_log == True:
     ax.set_yscale("log")
     ax.set_xscale("log")
+elif log_y == True:
+    ax.set_yscale("log")
 plt.legend()
 
 plt.show()
