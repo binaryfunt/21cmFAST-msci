@@ -62,13 +62,14 @@ files_in = []
 z_index = -1
 minrange = 1e5
 maxrange = -1e5
+crop_size = 0
 savefile = 0
 del_z_index = int(0)
 
 # check for optional arguments
 if(1):
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"u:f:x:z:y:i:", ["filter=", "filterx=", "filtery=", "filterz=", "fx=", "fy=", "fz=", "zindex=", "min=", "max=", "savearray", "delzindex="])
+    opts, args = getopt.getopt(sys.argv[1:],"u:f:x:z:y:i:", ["filter=", "filterx=", "filtery=", "filterz=", "fx=", "fy=", "fz=", "zindex=", "min=", "max=", "savearray", "crop=", "delzindex="])
   except getopt.GetoptError:
     print USAGE
     sys.exit(2)
@@ -96,6 +97,8 @@ if(1):
       minrange = float(arg)
     elif opt in ("-max", "--max"):
       maxrange = float(arg)
+    elif opt in ("--crop="):
+        crop_size = int(arg)
     elif opt in ("--savearray"):
       savefile = 1
 
@@ -145,6 +148,14 @@ def smooth_field(data, iso_sigma, x_sigma, y_sigma, z_sigma):
             data = sp.ndimage.filters.gaussian_filter1d(data, sigma=z_sigma, axis=2)
     return data
 
+def crop(data, length):
+    """
+    Crop the box to a size given by length (int)
+    """
+    if length > 0:
+        return data[:length,:length,:length]
+    else:
+        return data
 
 
 # go through list of files and process each one
@@ -170,6 +181,7 @@ for path in files_in:
 
     data1 = reshape_data(data1, DIM)
     data1 = smooth_field(data1, iso_sigma, x_sigma, y_sigma, z_sigma)
+    data1 = crop(data1, crop_size)
 
     fig = plt.figure(dpi=72)
     sub_fig = fig.add_subplot(111)
