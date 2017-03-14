@@ -286,224 +286,85 @@ int main(int argc, char ** argv) {
     initialiseSplinedSigmaM(M_MIN, 1e16);
     erfc_denom_cell = 1; //dummy value
     R = fmin(MFP, L_FACTOR*BOX_LEN);
-    LAST_FILTER_STEP = 0;
+    LAST_FILTER_STEP = 1;//0;
     fprintf(stderr, "Filtering (using excursion set formulism (?))...\n");
-    while (!LAST_FILTER_STEP) {//(R > (cell_length_factor*BOX_LEN/(HII_DIM+0.0))){
-        if ( ((R/DELTA_R_HII_FACTOR) <= (cell_length_factor*BOX_LEN/(float)HII_DIM)) || ((R/DELTA_R_HII_FACTOR) <= R_BUBBLE_MIN) ){
-            LAST_FILTER_STEP = 1;
-        }
+    // while !LAST_FILTER_STEP
+    // if ( ((R/DELTA_R_HII_FACTOR) <= (cell_length_factor*BOX_LEN/(float)HII_DIM)) || ((R/DELTA_R_HII_FACTOR) <= R_BUBBLE_MIN) ){
+    //     LAST_FILTER_STEP = 1;
+    // }
 
-        fprintf(LOG, "before memcpy, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
-        fflush(LOG);
-        memcpy(deltax_filtered, deltax_unfiltered, sizeof(fftwf_complex)*HII_KSPACE_NUM_PIXELS);
-        fprintf(LOG, "begin filter, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
-        fflush(LOG);
-        HII_filter(deltax_filtered, HII_FILTER, R);
-        fprintf(LOG, "end filter, clock=%06.2f\n", (double)clock() / CLOCKS_PER_SEC);
-        fflush(LOG);
+    fprintf(LOG, "before memcpy, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
+    fflush(LOG);
+    memcpy(deltax_filtered, deltax_unfiltered, sizeof(fftwf_complex)*HII_KSPACE_NUM_PIXELS);
+    fprintf(LOG, "begin filter, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
+    fflush(LOG);
+    HII_filter(deltax_filtered, HII_FILTER, R);
+    fprintf(LOG, "end filter, clock=%06.2f\n", (double)clock() / CLOCKS_PER_SEC);
+    fflush(LOG);
 
-        // do the FFT to get the M_coll
-        fprintf(LOG, "begin fft with R=%f, clock=%06.2f\n", R, (double)clock()/CLOCKS_PER_SEC);
-        fflush(LOG);
-        plan = fftwf_plan_dft_c2r_3d(HII_DIM, HII_DIM, HII_DIM, (fftwf_complex *)deltax_filtered, (float *)deltax_filtered, FFTW_ESTIMATE);
-        fftwf_execute(plan); fftwf_destroy_plan(plan); fftwf_cleanup();
-        fprintf(LOG, "end fft with R=%f, clock=%06.2f\n", R, (double)clock()/CLOCKS_PER_SEC);
-        fflush(LOG);
+    // do the FFT to get the M_coll
+    fprintf(LOG, "begin fft with R=%f, clock=%06.2f\n", R, (double)clock()/CLOCKS_PER_SEC);
+    fflush(LOG);
+    plan = fftwf_plan_dft_c2r_3d(HII_DIM, HII_DIM, HII_DIM, (fftwf_complex *)deltax_filtered, (float *)deltax_filtered, FFTW_ESTIMATE);
+    fftwf_execute(plan); fftwf_destroy_plan(plan); fftwf_cleanup();
+    fprintf(LOG, "end fft with R=%f, clock=%06.2f\n", R, (double)clock()/CLOCKS_PER_SEC);
+    fflush(LOG);
 
-        /* Check if this is the last filtering scale.  If so, we don't need deltax_unfiltered anymore.
-         We will re-read it to get the real-space field, which we will use to se the residual
-         neutral fraction */
-        ST_over_PS = 0;
-        f_coll = 0;
-        if (LAST_FILTER_STEP) {
-            sprintf(filename, "../Boxes/updated_smoothed_deltax_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
-            // FOLD: check if able to open file
-            if (!(F = fopen(filename, "rb"))) {
-                fprintf(stderr, "output_fcoll: ERROR: unable to open file %s\n", filename);
-                fprintf(LOG, "output_fcoll: ERROR: unable to open file %s\n", filename);
-                fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads();
-                free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
-            }
-            // FOLD: check for read error while reading deltax box
-            for (i = 0; i < HII_DIM; i++) {
-                for (j = 0; j < HII_DIM; j++) {
-                    for (k = 0; k <HII_DIM; k++){
-                        if (fread((float *)deltax_unfiltered + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F)!=1) {
-                            fprintf(stderr, "output_fcoll: Read error occured while reading deltax box.\n");
-                            fprintf(LOG, "output_fcoll: Read error occured while reading deltax box.\n");
-                            fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads(); fclose(F);
-                            free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
-                        }
-                    }
-                }
-            }
-            fclose(F);
-
-            temparg = 2*(pow(sigma_z0(M_MIN), 2) - pow(sigma_z0(RtoM(cell_length_factor*BOX_LEN/(float)HII_DIM)), 2) ) ;
-            if (temparg < 0) {  // our filtering scale has become too small
-                break;
-            }
-            erfc_denom_cell = sqrt(temparg);
-
-            // renormalize the collapse fraction so that the mean matches ST,
-            // since we are using the evolved (non-linear) density field
-            sample_ct = 0;
-
-            for (x = 0; x < HII_DIM; x++) {
-                for (y = 0; y < HII_DIM; y++) {
-                    for (z = 0; z < HII_DIM; z++) {
-                        density_over_mean = 1.0 + *((float *)deltax_unfiltered + HII_R_FFT_INDEX(x,y,z));
-                        erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor;
-                        Fcoll[HII_R_FFT_INDEX(x,y,z)] = splined_erfc(erfc_num / erfc_denom_cell);
-                        f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                    }
-                }
-            }
-            f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll;
-
-        } // end if last filter step conditional statement
-
-        // not the last filter step, and we operating on the density field
-        else {
-            fprintf(LOG, "begin f_coll normalization if, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
-            fflush(LOG);
-            temparg = 2 * (pow(sigma_z0(M_MIN), 2) - pow(sigma_z0(RtoM(R)), 2));
-            if (temparg < 0) {  // our filtering scale has become too small
-                break;
-            }
-	        erfc_denom = sqrt(temparg);
-
-            // renormalize the collapse fraction so that the mean matches ST,
-            // since we are using the evolved (non-linear) density field
-            sample_ct = 0;
-
-            for (x = 0; x < HII_DIM; x++) {
-                for (y = 0; y < HII_DIM; y++) {
-                    for (z = 0; z < HII_DIM; z++) {
-                        density_over_mean = 1.0 + *((float *)deltax_filtered + HII_R_FFT_INDEX(x,y,z));
-                        erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor;
-                        Fcoll[HII_R_FFT_INDEX(x,y,z)] = splined_erfc(erfc_num / erfc_denom);
-                        f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                    }
-                }
-            }
-            f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll;
-            fprintf(LOG, "end f_coll normalization if, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
-            fflush(LOG);
-        }
-        //     fprintf(stderr, "Last filter %i, R_filter=%f, fcoll=%f, ST_over_PS=%f, mean normalized fcoll=%f\n", LAST_FILTER_STEP, R, f_coll, ST_over_PS, f_coll*ST_over_PS);
-
-
-        /************  MAIN LOOP THROUGH THE BOX **************/
-        fprintf(LOG, "start of main loop scroll, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
-        fflush(LOG);
-        // now lets scroll through the filtered box
-        ave_xHI_xrays = ave_den = ave_fcoll = std_xrays = 0;
-        ion_ct = 0;
-        for (x = 0; x < HII_DIM; x++) {
-            for (y = 0; y < HII_DIM; y++) {
-                for (z = 0; z < HII_DIM; z++) {
-                    if (LAST_FILTER_STEP) {
-
-                        density_over_mean = 1.0 + *((float *)deltax_unfiltered + HII_R_FFT_INDEX(x,y,z));
-
-                        if (density_over_mean <= 0) {
-                            density_over_mean = FRACT_FLOAT_ERR;
-
-                            erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor;
-                            if (LAST_FILTER_STEP) {
-                                f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
-                            } else {
-                                f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
-                            }
-                        } else {
-                            f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                        }
-                    } else {
-
-                        density_over_mean = 1.0 + *((float *)deltax_filtered + HII_R_FFT_INDEX(x,y,z));
-
-                        if (density_over_mean <= 0) {
-                            density_over_mean = FRACT_FLOAT_ERR;
-
-                            erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor;
-                            if (LAST_FILTER_STEP) {
-                                f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
-                            } else {
-                                f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
-                            }
-                        }
-                        else {
-                            f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                        }
-                    }
-
-                    /* check for aliasing which can occur for small R and small cell sizes,
-                     since we are using the analytic form of the window function for speed and simplicity */
-                    /*
-                    if (density_over_mean <= 0){
-                        //	    fprintf(LOG, "WARNING: aliasing during filtering step produced density n/<n> of %06.2f at cell (%i, %i, %i)\n Setting to 0\n", density_over_mean, x,y,z);
-                        density_over_mean = FRACT_FLOAT_ERR;
-                    }*/
-
-
-                    // adjust the denominator of the collapse fraction for the residual electron fraction in the neutral medium
-                    xHI_from_xrays = 1;
-
-                    if (f_coll > f_coll_crit) { // If ionised
-
-                        if (FIND_BUBBLE_ALGORITHM == 2) { // center method
-                            xH[HII_R_INDEX(x, y, z)] = 0;
-
-                        } else if (FIND_BUBBLE_ALGORITHM == 1) { // sphere method
-                            update_in_sphere(xH, HII_DIM, R/BOX_LEN, x/(HII_DIM+0.0), y/(HII_DIM+0.0), z/(HII_DIM+0.0));
-
-                        } else {
-                            // FOLD: Incorrect choice of find bubble algorithm
-                            fprintf(stderr, "Incorrect choice of find bubble algorithm: %i\nAborting...", FIND_BUBBLE_ALGORITHM);
-                            fprintf(LOG, "Incorrect choice of find bubble algorithm: %i\nAborting...", FIND_BUBBLE_ALGORITHM);
-                            fflush(NULL);
-                            z = HII_DIM; y = HII_DIM; x = HII_DIM; R=0;
-                        }
-                    }
-
-                    /* check if this is the last filtering step.
-                     if so, assign partial ionizations to those cells which aren't fully ionized */
-                    else if (LAST_FILTER_STEP && (xH[HII_R_INDEX(x, y, z)] > TINY)) {
-
-                        f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                        if (f_coll > 1) {
-                            f_coll = 1;
-                        }
-                        ave_N_min_cell = f_coll * pixel_mass*density_over_mean / M_MIN; // ave # of M_MIN halos in cell
-                        if (ave_N_min_cell < N_POISSON) {
-                            // the collapsed fraction is too small, lets add poisson scatter in the halo number
-                            N_min_cell = (int) gsl_ran_poisson(r, ave_N_min_cell);
-                            f_coll = N_min_cell * M_MIN / (pixel_mass*density_over_mean);
-                        }
-
-                        if (f_coll > 1) {
-                            f_coll = 1;
-                        }
-                        res_xH = xHI_from_xrays - f_coll * ION_EFF_FACTOR;
-                        // and make sure fraction doesn't blow up for underdense pixels
-                        if (res_xH < 0) {
-                            res_xH = 0;
-                        } else if (res_xH > 1) {
-                            res_xH = 1;
-                        }
-                        xH[HII_R_INDEX(x, y, z)] = res_xH;
-                    } // end partial ionizations at last filtering step
-
-                } // k
-            } // j
-        } // i
-
-        R /= DELTA_R_HII_FACTOR;
+    /* Check if this is the last filtering scale.  If so, we don't need deltax_unfiltered anymore.
+     We will re-read it to get the real-space field, which we will use to se the residual
+     neutral fraction */
+    ST_over_PS = 0;
+    f_coll = 0;
+    // if LAST_FILTER_STEP
+    sprintf(filename, "../Boxes/updated_smoothed_deltax_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+    if (!(F = fopen(filename, "rb"))) {
+        fprintf(stderr, "output_fcoll: ERROR: unable to open file %s\n", filename);
+        fprintf(LOG, "output_fcoll: ERROR: unable to open file %s\n", filename);
+        fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads();
+        free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
     }
+    for (i = 0; i < HII_DIM; i++) {
+        for (j = 0; j < HII_DIM; j++) {
+            for (k = 0; k <HII_DIM; k++){
+                if (fread((float *)deltax_unfiltered + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F)!=1) {
+                    fprintf(stderr, "output_fcoll: Read error occured while reading deltax box.\n");
+                    fprintf(LOG, "output_fcoll: Read error occured while reading deltax box.\n");
+                    fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads(); fclose(F);
+                    free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
+                }
+            }
+        }
+    }
+    fclose(F);
 
+    temparg = 2*(pow(sigma_z0(M_MIN), 2) - pow(sigma_z0(RtoM(cell_length_factor*BOX_LEN/(float)HII_DIM)), 2) ) ;
+    if (temparg < 0) {  // our filtering scale has become too small
+        fprintf(stderr, "our filtering scale has become too small");
+        // break
+    }
+    erfc_denom_cell = sqrt(temparg);
+
+    // renormalize the collapse fraction so that the mean matches ST,
+    // since we are using the evolved (non-linear) density field
+    sample_ct = 0;
+
+    for (x = 0; x < HII_DIM; x++) {
+        for (y = 0; y < HII_DIM; y++) {
+            for (z = 0; z < HII_DIM; z++) {
+                density_over_mean = 1.0 + *((float *)deltax_unfiltered + HII_R_FFT_INDEX(x,y,z));
+                erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor;
+                Fcoll[HII_R_FFT_INDEX(x,y,z)] = splined_erfc(erfc_num / erfc_denom_cell);
+                f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
+            }
+        }
+    }
+    f_coll /= (double) HII_TOT_NUM_PIXELS;
+    ST_over_PS = mean_f_coll_st / f_coll;
+    // endif LAST_FILTER_STEP
+
+    // /* ---  MAIN LOOP THROUGH THE BOX --- */
+
+    // endwhile
 
     /* -------- OUTPUT THE FCOLL ARRAY -------- */
     sprintf(Fcoll_filename, "../Boxes/Fcoll_output_file_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
