@@ -1,1 +1,0 @@
-for i in $(seq 0 1 5); do /; python Covariance_data.py -f $i -i ../21cmFAST_Fcoll_fullsim/Run2_z12/Fcoll_output_file -i ../21cmFAST_Fcoll_fullsim/Run2_z12/Boxes/xH_nohalos_z012.00_nf0.955289_eff20.0_effPLindex0.0_HIIfilter1_Mmin3.3e+08_RHIImax20_256_300Mpc; done

@@ -1,7 +1,9 @@
 # C compiler and flags
-CPPFLAGS = -I/usr/local/include
-LDFLAGS = -lgsl -lgslcblas -lfftw3f_omp -lfftw3f -lm
+CPPFLAGS = -I/opt/local/include -I/usr/local/include
+LDFLAGS = -L/opt/local/lib -lgsl -lgslcblas -lfftw3f_omp -lfftw3f -lm
+#LDFLAGS = -L/opt/local/lib -L/usr/local/ -lgsl -lgslcblas -lfftw3f -lm
 CC      = gcc -fopenmp
+#CC = gcc
 #CC      = gcc -fopenmp -mtune=core2 -march=core2 -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_THREAD_SAFE #for my mac pro 64bit
 
 
@@ -27,7 +29,6 @@ OBJ_FILES = init \
   delta_ps \
   delta_T \
   find_HII_bubbles \
-  output_fcoll \
   gen_size_distr \
   perturb_field \
   filter_den_hist \
@@ -48,7 +49,7 @@ drive_logZscroll_Ts: drive_logZscroll_Ts.c \
 	${OBJ_FILES} \
 	${COSMO_FILES} \
 
-	${CC} ${CPPFLAGS} -o drive_logZscroll_Ts drive_logZscroll_Ts.c ${LDFLAGS}
+	${CC} ${CPPFLAGS} -o drive_logZscroll_Ts drive_logZscroll_Ts.c ${LDFLAGS} 
 
 kSZ_power: kSZ_power.c \
 	${COSMO_FILES} \
@@ -125,7 +126,7 @@ perturb_field:	perturb_field.c \
 gen_size_distr:	gen_size_distr.c \
 	${COSMO_FILES}
 
-	${CC} ${CPPFLAGS} -o gen_size_distr gen_size_distr.c ${LDFLAGS}
+	${CC} ${CPPFLAGS} -o gen_size_distr gen_size_distr.c ${LDFLAGS} 
 
 
 delta_ps:	delta_ps.c \
@@ -146,11 +147,6 @@ find_HII_bubbles:	find_HII_bubbles.c \
 
 	${CC} ${CPPFLAGS} -o find_HII_bubbles find_HII_bubbles.c ${LDFLAGS}
 
-output_fcoll:	output_fcoll.c \
-	bubble_helper_progs.c \
-	${COSMO_FILES}
-
-	${CC} ${CPPFLAGS} -o output_fcoll output_fcoll.c ${LDFLAGS}
 
 find_halos:	find_halos.c \
 	filter.c \

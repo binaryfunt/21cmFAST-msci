@@ -9,12 +9,12 @@ import sys, getopt
 import os
 
 #File paths
-# nf_files_in=['/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Fcoll_output_file', '/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Boxes/xH_nohalos_z012.00_nf0.955289_eff20.0_effPLindex0.0_HIIfilter1_Mmin3.3e+08_RHIImax20_256_300Mpc']
-# density_files_in=['/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Fcoll_output_file', '/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Boxes/updated_smoothed_deltax_z012.00_256_300Mpc']
-# Tb_files_in=['/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Fcoll_output_file', '/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Boxes/delta_T_v3_no_halos_z012.00_nf0.955289_useTs0_zetaX-1.0e+00_alphaX-1.0_TvirminX-1.0e+00_aveTb028.94_Pop-1_256_300Mpc']
-nf_files_in=['C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/Fcoll_output_file_z008.00', 'C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/xH_nohalos_z008.00_nf0.808285_eff10.0_effPLindex0.0_HIIfilter1_Mmin5.8e+08_RHIImax20_256_300Mpc']
-density_files_in=['C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/Fcoll_output_file_z008.00', 'C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/updated_smoothed_deltax_z008.00_256_300Mpc']
-Tb_files_in=['C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/Fcoll_output_file_z008.00', 'C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/delta_T_v3_no_halos_z008.00_nf0.808285_useTs0_zetaX-1.0e+00_alphaX-1.0_TvirminX-1.0e+00_aveTb017.91_Pop-1_256_300Mpc']
+ nf_files_in=['/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Fcoll_output_file', '/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Boxes/xH_nohalos_z012.00_nf0.955289_eff20.0_effPLindex0.0_HIIfilter1_Mmin3.3e+08_RHIImax20_256_300Mpc']
+ density_files_in=['/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Fcoll_output_file', '/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Boxes/updated_smoothed_deltax_z012.00_256_300Mpc']
+ Tb_files_in=['/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Fcoll_output_file', '/Users/tristan2/Desktop/Imperial/Year_4/Project/21cmFAST_Fcoll_fullsim/Run2_z12/Boxes/delta_T_v3_no_halos_z012.00_nf0.955289_useTs0_zetaX-1.0e+00_alphaX-1.0_TvirminX-1.0e+00_aveTb028.94_Pop-1_256_300Mpc']
+#nf_files_in=['C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/Fcoll_output_file_z008.00', 'C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/xH_nohalos_z008.00_nf0.808285_eff10.0_effPLindex0.0_HIIfilter1_Mmin5.8e+08_RHIImax20_256_300Mpc']
+#density_files_in=['C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/Fcoll_output_file_z008.00', 'C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/updated_smoothed_deltax_z008.00_256_300Mpc']
+#Tb_files_in=['C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/Fcoll_output_file_z008.00', 'C:/Users/Ronnie/Documents/21cmFast-msci/Boxes/delta_T_v3_no_halos_z008.00_nf0.808285_useTs0_zetaX-1.0e+00_alphaX-1.0_TvirminX-1.0e+00_aveTb017.91_Pop-1_256_300Mpc']
 
 def load_binary_data(filename, dtype=np.float32):
      """
