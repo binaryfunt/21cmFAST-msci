@@ -27,6 +27,7 @@ OBJ_FILES = init \
   delta_ps \
   delta_T \
   find_HII_bubbles \
+  find_HII_bubbles_mod_fcoll \
   output_fcoll \
   gen_size_distr \
   perturb_field \
@@ -145,6 +146,12 @@ find_HII_bubbles:	find_HII_bubbles.c \
 	${COSMO_FILES}
 
 	${CC} ${CPPFLAGS} -o find_HII_bubbles find_HII_bubbles.c ${LDFLAGS}
+
+find_HII_bubbles_mod_fcoll:    find_HII_bubbles_mod_fcoll.c \
+	bubble_helper_progs.c \
+	${COSMO_FILES}
+
+	${CC} ${CPPFLAGS} -o find_HII_bubbles_mod_fcoll find_HII_bubbles_mod_fcoll.c ${LDFLAGS}
 
 output_fcoll:	output_fcoll.c \
 	bubble_helper_progs.c \
