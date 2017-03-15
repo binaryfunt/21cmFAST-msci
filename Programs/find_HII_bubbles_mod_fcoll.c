@@ -92,7 +92,7 @@ int main(int argc, char ** argv){
     unsigned long long ct, ion_ct, sample_ct;
     float f_coll_crit, pixel_volume, density_over_mean, erfc_num, erfc_denom, erfc_denom_cell, res_xH, Splined_Fcoll;
     float *xH, TVIR_MIN, MFP, xHI_from_xrays, std_xrays;
-    fftwf_complex *M_coll_unfiltered, *M_coll_filtered, *deltax_unfiltered, *deltax_filtered, *xe_unfiltered, *xe_filtered;
+    fftwf_complex *M_coll_unfiltered, *M_coll_filtered, *deltax_unfiltered, *deltax_filtered, *xe_unfiltered, *xe_filtered *Fcoll_unfiltered, *Fcoll_filtered;
     fftwf_plan plan;
     double global_xH, ave_xHI_xrays, ave_den, ST_over_PS, mean_f_coll_st, mean_f_coll_ps, f_coll, ave_fcoll;
     const gsl_rng_type * T;
@@ -106,11 +106,11 @@ int main(int argc, char ** argv){
     if ((argc>2) && (argv[1][0]=='-') && ((argv[1][1]=='p') || (argv[1][1]=='P'))) {
         // user specified num proc
         num_th = atoi(argv[2]);
-        fprintf(stderr, "find_HII_bubbles: threading with user-specified %i threads\n", num_th);
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: threading with user-specified %i threads\n", num_th);
         arg_offset = 2;
     } else {
         num_th = NUMCORES;
-        fprintf(stderr, "find_HII_bubbles: threading with default %i threads\n", num_th);
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: threading with default %i threads\n", num_th);
         arg_offset = 0;
     }
     if (argc == (arg_offset+2)) {
@@ -137,7 +137,7 @@ int main(int argc, char ** argv){
 
     // FOLD: check for error initialising fftwf threads
     if (fftwf_init_threads() == 0) {
-        fprintf(stderr, "find_HII_bubbles: ERROR: problem initializing fftwf threads\nAborting\n.");
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: ERROR: problem initializing fftwf threads\nAborting\n.");
         return -1;
     }
     omp_set_num_threads(num_th);
@@ -246,12 +246,12 @@ int main(int argc, char ** argv){
 
     // read in the perturbed density field
     // FIXME
+    // 1st allocate fftw memories
     deltax_unfiltered = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex)*HII_KSPACE_NUM_PIXELS);
     deltax_filtered = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex)*HII_KSPACE_NUM_PIXELS);
-    // FOLD: check for error allocating memory for deltax boxes
     if (!deltax_unfiltered || !deltax_filtered) {
-        fprintf(stderr, "find_HII_bubbles: Error allocating memory for deltax boxes\nAborting...\n");
-        fprintf(LOG, "find_HII_bubbles: Error allocating memory for deltax boxes\nAborting...\n");
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: Error allocating memory for deltax boxes\nAborting...\n");
+        fprintf(LOG, "find_HII_bubbles_mod_fcoll: Error allocating memory for deltax boxes\nAborting...\n");
         fftwf_free(xH); fclose(LOG);
         if (USE_HALO_FIELD){
             fftwf_free(M_coll_unfiltered);
@@ -268,11 +268,26 @@ int main(int argc, char ** argv){
     fprintf(stderr, "Reading in deltax box\n");
     fprintf(LOG, "Reading in deltax box\n");
 
+    // <Fcoll>
+    Fcoll_unfiltered = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex)*HII_KSPACE_NUM_PIXELS);
+    Fcoll_filtered = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex)*HII_KSPACE_NUM_PIXELS);
+    if (!Fcoll_unfiltered || !Fcoll_filtered) {
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: Error allocating memory for model Fcoll box\nAborting...\n");
+        fprintf(LOG, "find_HII_bubbles_mod_fcoll: Error allocating memory for model Fcoll box\nAborting...\n");
+        fftwf_free(xH); fclose(LOG);
+        fftwf_cleanup_threads();
+        free_ps();
+        return -1;
+    }
+    fprintf(stderr, "Reading in model Fcoll box\n");
+    fprintf(LOG, "Reading in model Fcoll box\n");
+    // </Fcoll>
+
     sprintf(filename, "../Boxes/updated_smoothed_deltax_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
     F = fopen(filename, "rb");
     if (!F) {
-        fprintf(stderr, "find_HII_bubbles: Unable to open file: %s\n", filename);
-        fprintf(LOG, "find_HII_bubbles: Unable to open file: %s\n", filename);
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: Unable to open file: %s\n", filename);
+        fprintf(LOG, "find_HII_bubbles_mod_fcoll: Unable to open file: %s\n", filename);
         fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered);
         if (USE_HALO_FIELD){
             fftwf_free(M_coll_unfiltered);
@@ -290,8 +305,8 @@ int main(int argc, char ** argv){
         for (j = 0; j < HII_DIM; j++) {
             for (k = 0; k < HII_DIM; k++) {
                 if (fread((float *)deltax_unfiltered + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F)!=1){
-                    fprintf(stderr, "find_HII_bubbles: Read error occured while reading deltax box.\n");
-                    fprintf(LOG, "find_HII_bubbles: Read error occured while reading deltax box.\n");
+                    fprintf(stderr, "find_HII_bubbles_mod_fcoll: Read error occured while reading deltax box.\n");
+                    fprintf(LOG, "find_HII_bubbles_mod_fcoll: Read error occured while reading deltax box.\n");
                     fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered);
                     fftwf_cleanup_threads(); fclose(F); free_ps();
                     return -1;
@@ -317,6 +332,48 @@ int main(int argc, char ** argv){
     fprintf(LOG, "end initial ffts, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
     fflush(LOG);
 
+    // <Fcoll>
+    sprintf(filename, "../Boxes/Fcoll_output_file_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+    F = fopen(filename, "rb");
+    if (!F) {
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: Unable to open file: %s\n", filename);
+        fprintf(LOG, "find_HII_bubbles_mod_fcoll: Unable to open file: %s\n", filename);
+        fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered);
+        fftwf_cleanup_threads();
+        free_ps();
+        return -1;
+    }
+    for (i = 0; i < HII_DIM; i++) {
+        for (j = 0; j < HII_DIM; j++) {
+            for (k = 0; k < HII_DIM; k++) {
+                if (fread((float *)Fcoll_unfiltered + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F) != 1){
+                    fprintf(stderr, "find_HII_bubbles_mod_fcoll: Read error occured while reading model Fcoll box.\n");
+                    fprintf(LOG, "find_HII_bubbles_mod_fcoll: Read error occured while reading model Fcoll box.\n");
+                    fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered);
+                    fftwf_cleanup_threads(); fclose(F); free_ps();
+                    return -1;
+                }
+            }
+        }
+    }
+    fclose(F);
+    // do the fft to get the k-space Fcoll field
+    fprintf(LOG, "begin initial ffts, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
+    fflush(LOG);
+
+    plan = fftwf_plan_dft_r2c_3d(HII_DIM, HII_DIM, HII_DIM, (float *)Fcoll_unfiltered, (fftwf_complex *)Fcoll_unfiltered, FFTW_ESTIMATE);
+    fftwf_execute(plan);
+    fftwf_destroy_plan(plan); fftwf_cleanup();
+    // remember to add the factor of VOLUME/TOT_NUM_PIXELS when converting from
+    //  real space to k-space
+    // Note: we will leave off factor of VOLUME, in anticipation of the inverse FFT below
+    for (ct = 0; ct < HII_KSPACE_NUM_PIXELS; ct++) {
+        Fcoll_unfiltered[ct] /= (HII_TOT_NUM_PIXELS+0.0);
+    }
+    fprintf(LOG, "end initial ffts, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
+    fflush(LOG);
+    // </Fcoll>
+
     // loop through the filter radii (in Mpc)
     initialiseSplinedSigmaM(M_MIN, 1e16);
     erfc_denom_cell = 1; //dummy value
@@ -334,7 +391,7 @@ int main(int argc, char ** argv){
         fprintf(LOG, "begin filter, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
         fflush(LOG);
         // Smooth/filter the density field on scale R:
-        HII_filter(deltax_filtered, HII_FILTER, R);
+        HII_filter(deltax_filtered, HII_FILTER, R); // HII_FILTER == 1 => k-space top-hat filter
         fprintf(LOG, "end filter, clock=%06.2f\n", (double)clock() / CLOCKS_PER_SEC);
         fflush(LOG);
 
@@ -348,9 +405,30 @@ int main(int argc, char ** argv){
         fprintf(LOG, "end fft with R=%f, clock=%06.2f\n", R, (double)clock()/CLOCKS_PER_SEC);
         fflush(LOG);
 
-        /* Check if this is the last filtering scale.  If so, we don't need deltax_unfiltered anymore.
-         We will re-read it to get the real-space field, which we will use to se the residual
-         neutral fraction */
+        // <Fcoll>
+        fprintf(LOG, "before memcpy, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
+        fflush(LOG);
+        memcpy(Fcoll_filtered, Fcoll_unfiltered, sizeof(fftwf_complex)*HII_KSPACE_NUM_PIXELS);
+        fprintf(LOG, "begin filter, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
+        fflush(LOG);
+        // Smooth/filter the model  field on scale R:
+        HII_filter(Fcoll_filtered, HII_FILTER, R); // HII_FILTER == 1 => k-space top-hat filter
+        fprintf(LOG, "end filter, clock=%06.2f\n", (double)clock() / CLOCKS_PER_SEC);
+        fflush(LOG);
+
+        // do the FFT
+        // i.e. FFT back to real space?
+        fprintf(LOG, "begin fft with R=%f, clock=%06.2f\n", R, (double)clock()/CLOCKS_PER_SEC);
+        fflush(LOG);
+        plan = fftwf_plan_dft_c2r_3d(HII_DIM, HII_DIM, HII_DIM, (fftwf_complex *)Fcoll_filtered, (float *)Fcoll_filtered, FFTW_ESTIMATE);
+        fftwf_execute(plan);
+        fftwf_destroy_plan(plan); fftwf_cleanup();
+        fprintf(LOG, "end fft with R=%f, clock=%06.2f\n", R, (double)clock()/CLOCKS_PER_SEC);
+        fflush(LOG);
+        // </Fcoll>
+
+        /* Check if this is the last filtering scale.  If so, we don't need deltax_unfiltered anymore (which is in k-space).
+         We will re-read it to get the real-space field (instead of inverse FT), which we will use to se [sic] the residual neutral fraction */
         ST_over_PS = 0;
         f_coll = 0;
 
@@ -360,18 +438,17 @@ int main(int argc, char ** argv){
             sprintf(filename, "../Boxes/updated_smoothed_deltax_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
             F = fopen(filename, "rb");
             if (!F) {
-                fprintf(stderr, "find_HII_bubbles: ERROR: unable to open file %s\n", filename);
-                fprintf(LOG, "find_HII_bubbles: ERROR: unable to open file %s\n", filename);
+                fprintf(stderr, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
+                fprintf(LOG, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
                 fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads();
                 free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
             }
-            // FOLD: check for read error while reading deltax box
             for (i = 0; i < HII_DIM; i++) {
                 for (j = 0; j < HII_DIM; j++) {
                     for (k = 0; k <HII_DIM; k++){
                         if (fread((float *)deltax_unfiltered + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F)!=1) {
-                            fprintf(stderr, "find_HII_bubbles: Read error occured while reading deltax box.\n");
-                            fprintf(LOG, "find_HII_bubbles: Read error occured while reading deltax box.\n");
+                            fprintf(stderr, "find_HII_bubbles_mod_fcoll: Read error occured while reading deltax box.\n");
+                            fprintf(LOG, "find_HII_bubbles_mod_fcoll: Read error occured while reading deltax box.\n");
                             fftwf_free(xH); fclose(LOG); fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads(); fclose(F);
                             free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
                         }
@@ -379,6 +456,30 @@ int main(int argc, char ** argv){
                 }
             }
             fclose(F);
+
+            // <Fcoll>
+            sprintf(filename, "../Boxes/Fcoll_output_file_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+            F = fopen(filename, "rb");
+            if (!F) {
+                fprintf(stderr, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
+                fprintf(LOG, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
+                fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads();
+                free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
+            }
+            for (i = 0; i < HII_DIM; i++) {
+                for (j = 0; j < HII_DIM; j++) {
+                    for (k = 0; k <HII_DIM; k++){
+                        if (fread((float *)Fcoll_unfiltered + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F)!=1) {
+                            fprintf(stderr, "find_HII_bubbles_mod_fcoll: Read error occured while reading model Fcoll box.\n");
+                            fprintf(LOG, "find_HII_bubbles_mod_fcoll: Read error occured while reading model Fcoll box.\n");
+                            fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads(); fclose(F);
+                            free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
+                        }
+                    }
+                }
+            }
+            fclose(F);
+            // </Fcoll>
 
             temparg = 2*(pow(sigma_z0(M_MIN), 2) - pow(sigma_z0(RtoM(cell_length_factor*BOX_LEN/(float)HII_DIM)), 2) ) ;
             if (temparg < 0) {  // our filtering scale has become too small
@@ -585,8 +686,8 @@ int main(int argc, char ** argv){
     }
     F = fopen(filename, "wb");
     if (!F) {
-        fprintf(stderr, "find_HII_bubbles: ERROR: unable to open file %s for writing!\n", filename);
-        fprintf(LOG, "find_HII_bubbles: ERROR: unable to open file %s for writing!\n", filename);
+        fprintf(stderr, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s for writing!\n", filename);
+        fprintf(LOG, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s for writing!\n", filename);
         global_xH = -1;
     } else {
         fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
@@ -605,19 +706,11 @@ int main(int argc, char ** argv){
     gsl_rng_free (r);
     fftwf_free(xH);
     fclose(LOG);
-    fftwf_free(deltax_unfiltered);
-    fftwf_free(deltax_filtered);
+    fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered);
+    fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered);
 
     destroy_21cmMC_arrays();
 
-    if (USE_HALO_FIELD){
-        fftwf_free(M_coll_unfiltered);
-        fftwf_free(M_coll_filtered);
-    }
     free_ps();
-    if (USE_TS_IN_21CM){
-        fftwf_free(xe_filtered);
-        fftwf_free(xe_unfiltered);
-    }
     return (int) (global_xH * 100);
 }
