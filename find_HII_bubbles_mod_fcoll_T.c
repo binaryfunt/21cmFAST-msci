@@ -90,9 +90,9 @@ int main(int argc, char ** argv){
     float ave_N_min_cell, ION_EFF_FACTOR, M_MIN, ALPHA;
     int x,y,z, N_min_cell, LAST_FILTER_STEP, num_th, arg_offset, i,j,k;
     unsigned long long ct, ion_ct, sample_ct;
-    float f_coll_crit, pixel_volume, density_over_mean, erfc_num, erfc_denom, erfc_denom_cell, res_xH, Splined_Fcoll;
+    float f_coll_crit, pixel_volume, density_over_mean, res_xH, Splined_Fcoll;
     float *xH, TVIR_MIN, MFP, xHI_from_xrays, std_xrays;
-    fftwf_complex *M_coll_unfiltered, *M_coll_filtered, *deltax_unfiltered, *deltax_filtered, *xe_unfiltered, *xe_filtered *Fcoll_unfiltered, *Fcoll_filtered;
+    fftwf_complex *Fcoll_unfiltered, *Fcoll_filtered;
     fftwf_plan plan;
     double global_xH, ave_xHI_xrays, ave_den, ST_over_PS, mean_f_coll_st, mean_f_coll_ps, f_coll, ave_fcoll;
     const gsl_rng_type * T;
@@ -306,7 +306,6 @@ int main(int argc, char ** argv){
 
     // loop through the filter radii (in Mpc)
     initialiseSplinedSigmaM(M_MIN, 1e16);
-    erfc_denom_cell = 1; //dummy value ----------------------- delete?
     R = fmin(MFP, L_FACTOR*BOX_LEN);
     LAST_FILTER_STEP = 0;
     while (!LAST_FILTER_STEP) { //-------------------------------------------------------------------------------------
@@ -347,8 +346,8 @@ int main(int argc, char ** argv){
             if (!F) {
                 fprintf(stderr, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
                 fprintf(LOG, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
-                fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads();
-                free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
+                fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered);  fftwf_cleanup_threads();
+                free_ps(); return -1;
             }
             for (i = 0; i < HII_DIM; i++) {
                 for (j = 0; j < HII_DIM; j++) {
@@ -356,8 +355,8 @@ int main(int argc, char ** argv){
                         if (fread((float *)Fcoll_unfiltered + HII_R_FFT_INDEX(i,j,k), sizeof(float), 1, F)!=1) {
                             fprintf(stderr, "find_HII_bubbles_mod_fcoll: Read error occured while reading model Fcoll box.\n");
                             fprintf(LOG, "find_HII_bubbles_mod_fcoll: Read error occured while reading model Fcoll box.\n");
-                            fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered); fftwf_free(M_coll_unfiltered); fftwf_free(M_coll_filtered);  fftwf_cleanup_threads(); fclose(F);
-                            free_ps(); if (USE_TS_IN_21CM){ fftwf_free(xe_filtered); fftwf_free(xe_unfiltered);} return -1;
+                            fftwf_free(xH); fclose(LOG); fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered); fftwf_cleanup_threads(); fclose(F);
+                            free_ps(); return -1;
                         }
                     }
                 }
@@ -380,10 +379,6 @@ int main(int argc, char ** argv){
                 for (x = 0; x < HII_DIM; x++) {
                     for (y = 0; y < HII_DIM; y++) {
                         for (z = 0; z < HII_DIM; z++) {
-                            // density_over_mean = 1.0 + *((float *)deltax_unfiltered + HII_R_FFT_INDEX(x,y,z));
-                            // erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
-                            // Fcoll[HII_R_FFT_INDEX(x,y,z)] = splined_erfc(erfc_num / erfc_denom_cell);
-                            // f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
                             f_coll += Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
                         }
                     }
@@ -408,16 +403,10 @@ int main(int argc, char ** argv){
             // since we are using the evolved (non-linear) density field
             sample_ct=0;
 
-            if(ALPHA == 0.) {
-                for (x = 0; x < HII_DIM; x++) {
-                    for (y = 0; y < HII_DIM; y++) {
-                        for (z = 0; z < HII_DIM; z++) {
-                            // density_over_mean = 1.0 + *((float *)deltax_filtered + HII_R_FFT_INDEX(x,y,z));
-                            // erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
-                            // Fcoll[HII_R_FFT_INDEX(x,y,z)] = splined_erfc(erfc_num / erfc_denom);
-                            // f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                            f_coll += Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)];
-                        }
+            for (x = 0; x < HII_DIM; x++) {
+                for (y = 0; y < HII_DIM; y++) {
+                    for (z = 0; z < HII_DIM; z++) {
+                        f_coll += Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)];
                     }
                 }
             }
@@ -451,44 +440,9 @@ int main(int argc, char ** argv){
             for (y = 0; y < HII_DIM; y++) {
                 for (z = 0; z < HII_DIM; z++) {
                     if (LAST_FILTER_STEP) {
-
-                        // if (ALPHA == 0.) {
-                        //     density_over_mean = 1.0 + *((float *)deltax_unfiltered + HII_R_FFT_INDEX(x,y,z));
-                        //
-                        //     if (density_over_mean <= 0) {
-                        //         density_over_mean = FRACT_FLOAT_ERR;
-                        //
-                        //         erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
-                        //         if (LAST_FILTER_STEP) {
-                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
-                        //         } else {
-                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
-                        //         }
-                        //     } else {
-                        //         f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                        //     }
-                        // }
                         f_coll = ST_over_PS * Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
-
-                    } else {
-
-                        // if (ALPHA == 0.) {
-                        //     density_over_mean = 1.0 + *((float *)deltax_filtered + HII_R_FFT_INDEX(x,y,z));
-                        //
-                        //     if (density_over_mean <= 0) {
-                        //         density_over_mean = FRACT_FLOAT_ERR;
-                        //
-                        //         erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
-                        //         if (LAST_FILTER_STEP) {
-                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
-                        //         } else {
-                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
-                        //         }
-                        //     }
-                        //     else {
-                        //         f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                        //     }
-                        // }
+                    }
+                    else {
                         f_coll = ST_over_PS * Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)];
                     }
 
@@ -517,20 +471,13 @@ int main(int argc, char ** argv){
                      "we allow for partially-ionized cells by setting the cell’s ionized fraction to ζfcoll(x,z,Rcell) at the last ﬁlter step for those cells which are not fully ionized" */
                     else if (LAST_FILTER_STEP && (xH[HII_R_INDEX(x, y, z)] > TINY)) {
                         if (!USE_HALO_FIELD) {
-                            if (ALPHA == 0.) {
-                                // f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                                f_coll = ST_over_PS * Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
-                                if (f_coll > 1) {
-                                    f_coll = 1;
-                                }
-                                /* FIXME: ask Jonathan about this: (?)
-                                (I'm guessing since N_POISSON = -1 we can just remove this) */
-                                // ave_N_min_cell = f_coll * pixel_mass * density_over_mean / M_MIN; // ave # of M_MIN halos in cell
-                                // if (ave_N_min_cell < N_POISSON) {
-                                //     // the collapsed fraction is too small, lets add poisson scatter in the halo number
-                                //     N_min_cell = (int) gsl_ran_poisson(r, ave_N_min_cell);
-                                //     f_coll = N_min_cell * M_MIN / (pixel_mass*density_over_mean);
-                                // }
+                            f_coll = ST_over_PS * Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)];
+                            if (f_coll>1) f_coll=1;
+                            ave_N_min_cell = f_coll * pixel_mass*density_over_mean / M_MIN; // ave # of M_MIN halos in cell
+                            if (ave_N_min_cell < N_POISSON){
+                                // the collapsed fraction is too small, lets add poisson scatter in the halo number
+                                N_min_cell = (int) gsl_ran_poisson(r, ave_N_min_cell);
+                                f_coll = N_min_cell * M_MIN / (pixel_mass*density_over_mean);
                             }
                         }
 
@@ -585,9 +532,9 @@ int main(int argc, char ** argv){
         fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
         fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
         fflush(LOG);
-        if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1) {
-            fprintf(stderr, "find_HII_bubbles_mod_fcoll.c: Write error occured while writing xH box.\n");
-            fprintf(LOG, "find_HII_bubbles_mod_fcoll.c: Write error occured while writing xH box.\n");
+        if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
+            fprintf(stderr, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
+            fprintf(LOG, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
             global_xH = -1;
         }
         fclose(F);
@@ -598,7 +545,6 @@ int main(int argc, char ** argv){
     gsl_rng_free (r);
     fftwf_free(xH);
     fclose(LOG);
-    // fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered);
     fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered);
 
     destroy_21cmMC_arrays();
