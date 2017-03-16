@@ -306,7 +306,7 @@ int main(int argc, char ** argv){
 
     // loop through the filter radii (in Mpc)
     initialiseSplinedSigmaM(M_MIN, 1e16);
-    erfc_denom_cell = 1; //dummy value
+    erfc_denom_cell = 1; //dummy value ----------------------- delete?
     R = fmin(MFP, L_FACTOR*BOX_LEN);
     LAST_FILTER_STEP = 0;
     while (!LAST_FILTER_STEP) { //-------------------------------------------------------------------------------------
