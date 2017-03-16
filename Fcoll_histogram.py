@@ -6,7 +6,7 @@ import sys, getopt
 USAGE = "USAGE: Fcoll_histogram.py -i <Fcoll data file> [--number=<number of bins>] [--loglog] [--logy]"
 
 file_in = ""
-number = 50
+number = 1000
 log_log = False
 log_y = False
 
@@ -28,9 +28,9 @@ def histogram(data, number):
     _bin_centres = (_bin_edges[:-1] + _bin_edges[1:])/2.
     return _freq, _bin_centres
 
-def monomial(x, a, k):
-    return a*x**k
-
+def monomial(x, a, k, b):
+    end = 1. - 0.0058135
+    return np.piecewise(x, [x<end, x>=end], [lambda x: a*x**k, lambda x: a*x**k + b])
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "h:i:n:", ["number=", "loglog", "logy"])
@@ -64,13 +64,15 @@ print "Number of bins:", number
 # n, bins, patches = plt.hist(Fcoll, number, histtype='step')
 freq, bin_centres = histogram(Fcoll, number)
 
-initial_guess = [1e7, -2]
+initial_guess = [1e7, -2, 1e5]
 
-popt, pcov = curve_fit(monomial, bin_centres[1:-1], freq[1:-1], p0=initial_guess)
+popt, pcov = curve_fit(monomial, bin_centres, freq, p0=initial_guess)
 # N.B. We ignore the first and last bins in the fitting
 
 print "Fitted a =", popt[0]
 print "Fitted k =", popt[1]
+print "Fitted b =", popt[2]
+
 print 100. * float(freq[0]) / float(sum(freq)), "% in 1st bin"
 print 100. * float(freq[-1]) / float(sum(freq)), "% in last bin"
 
