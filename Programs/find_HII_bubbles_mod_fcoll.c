@@ -92,7 +92,7 @@ int main(int argc, char ** argv){
     unsigned long long ct, ion_ct, sample_ct;
     float f_coll_crit, pixel_volume, density_over_mean, erfc_num, erfc_denom, erfc_denom_cell, res_xH, Splined_Fcoll;
     float *xH, TVIR_MIN, MFP, xHI_from_xrays, std_xrays;
-    fftwf_complex *M_coll_unfiltered, *M_coll_filtered, *deltax_unfiltered, *deltax_filtered, *xe_unfiltered, *xe_filtered *Fcoll_unfiltered, *Fcoll_filtered;
+    fftwf_complex *M_coll_unfiltered, *M_coll_filtered, *deltax_unfiltered, *deltax_filtered, *xe_unfiltered, *xe_filtered, *Fcoll_unfiltered, *Fcoll_filtered;
     fftwf_plan plan;
     double global_xH, ave_xHI_xrays, ave_den, ST_over_PS, mean_f_coll_st, mean_f_coll_ps, f_coll, ave_fcoll;
     const gsl_rng_type * T;
@@ -191,7 +191,7 @@ int main(int argc, char ** argv){
 
     // allocate memory for the neutral fraction box
     xH = (float *) fftwf_malloc(sizeof(float)*HII_TOT_NUM_PIXELS);
-    if (!xH){
+    if (!xH) {
         fprintf(stderr, "find_HII_bubbles.c: Error allocating memory for xH box\nAborting...\n");
         fprintf(LOG, "find_HII_bubbles.c: Error allocating memory for xH box\nAborting...\n");
         fclose(LOG); fftwf_cleanup_threads();
@@ -262,7 +262,7 @@ int main(int argc, char ** argv){
     // </Fcoll>
 
     // <Fcoll>
-    sprintf(filename, "../Boxes/Fcoll_output_file_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+    sprintf(filename, "../Boxes/Fcoll_output_file_CUBE_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
     F = fopen(filename, "rb");
     if (!F) {
         fprintf(stderr, "find_HII_bubbles_mod_fcoll: Unable to open file: %s\n", filename);
@@ -342,7 +342,7 @@ int main(int argc, char ** argv){
 
         if (LAST_FILTER_STEP) {
             // <Fcoll>
-            sprintf(filename, "../Boxes/Fcoll_output_file_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+            sprintf(filename, "../Boxes/Fcoll_output_file_CUBE_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
             F = fopen(filename, "rb");
             if (!F) {
                 fprintf(stderr, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
@@ -384,7 +384,10 @@ int main(int argc, char ** argv){
                             // erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
                             // Fcoll[HII_R_FFT_INDEX(x,y,z)] = splined_erfc(erfc_num / erfc_denom_cell);
                             // f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                            f_coll += Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
+
+                            // f_coll += Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
+                            Fcoll[HII_R_FFT_INDEX(x,y,z)] = *((float *)Fcoll_unfiltered + HII_R_FFT_INDEX(x,y,z));
+                            f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
                         }
                     }
                 }
@@ -400,15 +403,15 @@ int main(int argc, char ** argv){
             if (temparg < 0) {  // our filtering scale has become too small
                 break;
             }
-	        erfc_denom = sqrt(temparg);
+	        // erfc_denom = sqrt(temparg);
 
             // NOTE Fcoll still empty here (for first filter step)
 
             // renormalize the collapse fraction so that the mean matches ST,
             // since we are using the evolved (non-linear) density field
-            sample_ct=0;
+            sample_ct = 0;
 
-            if(ALPHA == 0.) {
+            if (ALPHA == 0.) {
                 for (x = 0; x < HII_DIM; x++) {
                     for (y = 0; y < HII_DIM; y++) {
                         for (z = 0; z < HII_DIM; z++) {
@@ -416,7 +419,14 @@ int main(int argc, char ** argv){
                             // erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
                             // Fcoll[HII_R_FFT_INDEX(x,y,z)] = splined_erfc(erfc_num / erfc_denom);
                             // f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                            f_coll += Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)];
+
+                            // if (x >= 128 && y >= 1 && z >= 200) {
+                            //     fprintf(stderr, "x = %i, y = %i, z = %i\n", x, y, z);
+                            //     fprintf(stderr, "%f\n", Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)]);
+                            // }
+                            // f_coll += Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)]
+                            Fcoll[HII_R_FFT_INDEX(x,y,z)] = *((float *)Fcoll_filtered + HII_R_FFT_INDEX(x,y,z));
+                            f_coll += Fcoll[HII_R_FFT_INDEX(x,y,z)];
                         }
                     }
                 }
@@ -430,7 +440,7 @@ int main(int argc, char ** argv){
 
 
         // NOTE Fcoll is very smoothed here for the first filter step
-        // sprintf(filename, "../Boxes/Fcoll_output_file_FIRST_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+        // sprintf(filename, "../Boxes/Fcoll_output_file_CUBE_FIRST_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
         // fprintf(stderr, "Writing Fcoll box\n");
         // fprintf(LOG, "Writing Fcoll box\n");
         // F = fopen(filename, "wb");
@@ -468,7 +478,7 @@ int main(int argc, char ** argv){
                         //         f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
                         //     }
                         // }
-                        f_coll = ST_over_PS * Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
+                        f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
 
                     } else {
 
@@ -489,7 +499,7 @@ int main(int argc, char ** argv){
                         //         f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
                         //     }
                         // }
-                        f_coll = ST_over_PS * Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)];
+                        f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
                     }
 
                     // adjust the denominator of the collapse fraction for the residual electron fraction in the neutral medium
@@ -519,7 +529,7 @@ int main(int argc, char ** argv){
                         if (!USE_HALO_FIELD) {
                             if (ALPHA == 0.) {
                                 // f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                                f_coll = ST_over_PS * Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
+                                f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
                                 if (f_coll > 1) {
                                     f_coll = 1;
                                 }
