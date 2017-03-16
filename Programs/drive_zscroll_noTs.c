@@ -16,9 +16,9 @@
 /*
   redshift scrolling parameters used by the drive_zscroll drive program
 */
-#define ZSTART (10) //inclusive
-#define ZEND (8) // inclusive
-#define ZSTEP (-2.0)
+#define ZSTART (7.5) //inclusive
+#define ZEND (7) // inclusive
+#define ZSTEP (-5.0)
 
 // #define INIT 1 // Set to 0 if using previous realisation, else set to 1
 
