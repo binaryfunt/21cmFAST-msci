@@ -37,9 +37,9 @@ def reshape_data(data, dim):
     return data
 
 
-in_path = "C:/Users/Ronnie/Documents/21cmFAST-msci/Boxes/Fcoll_output_file_z007.50_256_300Mpc"
-DIM = 256
-out_path = "C:/Users/Ronnie/Documents/21cmFAST-msci/Boxes/Fcoll_output_file_CUBE_z007.50_256_300Mpc"
+in_path = "C:/Users/Ronnie/Documents/21cmFAST-msci/Boxes/Fcoll_output_file_z007.50_64_75Mpc"
+DIM = 64
+out_path = "C:/Users/Ronnie/Documents/21cmFAST-msci/Boxes/Fcoll_output_file_CUBE_z007.50_64_75Mpc"
 
 
 Fcoll = load_binary_data(in_path)
