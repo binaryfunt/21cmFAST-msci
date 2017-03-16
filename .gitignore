@@ -2,7 +2,7 @@
 Programs/*
 # Then unignore files with extensions and other specifics
 !Programs/*.c
-!Programs/Makefile
+!Programs/Makefile_Copy
 
 Log_files/*
 Boxes
