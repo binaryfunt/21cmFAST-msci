@@ -26,7 +26,7 @@
   \zeta = HII_EFF_FACTOR * (M_halo / ION_M_MIN)^EFF_FACTOR_PL_INDEX
   see Nion_note.pdf in the root folder.
 */
-#define HII_EFF_FACTOR (float) (10) // 20
+#define HII_EFF_FACTOR (float) (20) // 20
 
 
 /*
