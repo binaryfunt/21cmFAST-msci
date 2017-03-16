@@ -452,43 +452,44 @@ int main(int argc, char ** argv){
                 for (z = 0; z < HII_DIM; z++) {
                     if (LAST_FILTER_STEP) {
 
-                        if (ALPHA == 0.) {
-                            density_over_mean = 1.0 + *((float *)deltax_unfiltered + HII_R_FFT_INDEX(x,y,z));
+                        // if (ALPHA == 0.) {
+                        //     density_over_mean = 1.0 + *((float *)deltax_unfiltered + HII_R_FFT_INDEX(x,y,z));
+                        //
+                        //     if (density_over_mean <= 0) {
+                        //         density_over_mean = FRACT_FLOAT_ERR;
+                        //
+                        //         erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
+                        //         if (LAST_FILTER_STEP) {
+                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
+                        //         } else {
+                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
+                        //         }
+                        //     } else {
+                        //         f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
+                        //     }
+                        // }
+                        f_coll = ST_over_PS * Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
 
-                            if (density_over_mean <= 0) {
-                                density_over_mean = FRACT_FLOAT_ERR;
-
-                                erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
-                                if (LAST_FILTER_STEP) {
-                                    f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
-                                } else {
-                                    f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
-                                }
-                            } else {
-                                f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                            }
-                        }
                     } else {
 
-                        if (ALPHA == 0.) {
-                            density_over_mean = 1.0 + *((float *)deltax_filtered + HII_R_FFT_INDEX(x,y,z));
-
-                            if (density_over_mean <= 0) {
-                                density_over_mean = FRACT_FLOAT_ERR;
-
-                                erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
-                                if (LAST_FILTER_STEP) {
-                                    f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
-                                } else {
-                                    f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
-                                }
-                            }
-                            else {
-                                f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                            }
-
-
-                        }
+                        // if (ALPHA == 0.) {
+                        //     density_over_mean = 1.0 + *((float *)deltax_filtered + HII_R_FFT_INDEX(x,y,z));
+                        //
+                        //     if (density_over_mean <= 0) {
+                        //         density_over_mean = FRACT_FLOAT_ERR;
+                        //
+                        //         erfc_num = (Deltac - (density_over_mean - 1)) / growth_factor; // Eq. (14) 21cmFAST
+                        //         if (LAST_FILTER_STEP) {
+                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom_cell);
+                        //         } else {
+                        //             f_coll = ST_over_PS * splined_erfc(erfc_num / erfc_denom);
+                        //         }
+                        //     }
+                        //     else {
+                        //         f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
+                        //     }
+                        // }
+                        f_coll = ST_over_PS * Fcoll_filtered[HII_R_FFT_INDEX(x,y,z)];
                     }
 
                     // adjust the denominator of the collapse fraction for the residual electron fraction in the neutral medium
@@ -517,14 +518,19 @@ int main(int argc, char ** argv){
                     else if (LAST_FILTER_STEP && (xH[HII_R_INDEX(x, y, z)] > TINY)) {
                         if (!USE_HALO_FIELD) {
                             if (ALPHA == 0.) {
-                                f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
-                                if (f_coll>1) f_coll=1;
-                                ave_N_min_cell = f_coll * pixel_mass*density_over_mean / M_MIN; // ave # of M_MIN halos in cell
-                                if (ave_N_min_cell < N_POISSON){
-                                    // the collapsed fraction is too small, lets add poisson scatter in the halo number
-                                    N_min_cell = (int) gsl_ran_poisson(r, ave_N_min_cell);
-                                    f_coll = N_min_cell * M_MIN / (pixel_mass*density_over_mean);
+                                // f_coll = ST_over_PS * Fcoll[HII_R_FFT_INDEX(x,y,z)];
+                                f_coll = ST_over_PS * Fcoll_unfiltered[HII_R_FFT_INDEX(x,y,z)];
+                                if (f_coll > 1) {
+                                    f_coll = 1;
                                 }
+                                /* FIXME: ask Jonathan about this: (?)
+                                (I'm guessing since N_POISSON = -1 we can just remove this) */
+                                // ave_N_min_cell = f_coll * pixel_mass * density_over_mean / M_MIN; // ave # of M_MIN halos in cell
+                                // if (ave_N_min_cell < N_POISSON) {
+                                //     // the collapsed fraction is too small, lets add poisson scatter in the halo number
+                                //     N_min_cell = (int) gsl_ran_poisson(r, ave_N_min_cell);
+                                //     f_coll = N_min_cell * M_MIN / (pixel_mass*density_over_mean);
+                                // }
                             }
                         }
 
@@ -579,9 +585,9 @@ int main(int argc, char ** argv){
         fprintf(LOG, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
         fprintf(stderr, "Neutral fraction is %f\nNow writing xH box at %s\n", global_xH, filename);
         fflush(LOG);
-        if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F)!=1){
-            fprintf(stderr, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
-            fprintf(LOG, "find_HII_bubbles.c: Write error occured while writing xH box.\n");
+        if (mod_fwrite(xH, sizeof(float)*HII_TOT_NUM_PIXELS, 1, F) != 1) {
+            fprintf(stderr, "find_HII_bubbles_mod_fcoll.c: Write error occured while writing xH box.\n");
+            fprintf(LOG, "find_HII_bubbles_mod_fcoll.c: Write error occured while writing xH box.\n");
             global_xH = -1;
         }
         fclose(F);
@@ -592,7 +598,7 @@ int main(int argc, char ** argv){
     gsl_rng_free (r);
     fftwf_free(xH);
     fclose(LOG);
-    fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered);
+    // fftwf_free(deltax_unfiltered); fftwf_free(deltax_filtered);
     fftwf_free(Fcoll_unfiltered); fftwf_free(Fcoll_filtered);
 
     destroy_21cmMC_arrays();
