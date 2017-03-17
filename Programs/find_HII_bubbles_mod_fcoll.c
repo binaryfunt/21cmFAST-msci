@@ -337,7 +337,7 @@ int main(int argc, char ** argv){
         // </Fcoll>
 
         /* Check if this is the last filtering scale.  If so, we don't need Fcoll_unfiltered anymore (because it's in k-space). We'll re-read it to get the real-space field (instead of inverse FT), which we will use to se [sic] the residual neutral fraction */
-        ST_over_PS = 0;
+        ST_over_PS = 1;//0; ---------------------
         f_coll = 0;
 
         if (LAST_FILTER_STEP) {
@@ -393,7 +393,7 @@ int main(int argc, char ** argv){
                 }
             }
             f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll;
+            // ST_over_PS = mean_f_coll_st / f_coll; -----------------------
         }
         // else if !LAST_FILTER_STEP && we're operating on the density field
         else {
@@ -432,7 +432,7 @@ int main(int argc, char ** argv){
                 }
             }
             f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll;
+            // ST_over_PS = mean_f_coll_st / f_coll; ------------------
             fprintf(LOG, "end f_coll normalization if, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
             fflush(LOG);
         }
