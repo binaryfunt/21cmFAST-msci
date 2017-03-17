@@ -2,10 +2,11 @@
 # SIMPLEST USAGE: python sliceplot.py -i file1 file2 file3...
 #
 # More complex options:
-USAGE = "USAGE: python sliceplot.py [--savearray] [--zindex=<z-index of slice>] [--delzindex=<offset for subtracting image>] [--filter=<smoothing sigma>] [--filterx=<x-axis smoothing sigma>] [--filtery=<y-axis smoothing sigma>] [--filterz=<z-axis smoothing sigma>] [--min=<min of plot>] [--max=<max of plot>] -i '<filename1> <filename2>...'"
+USAGE = "USAGE: python sliceplot.py [--savearray] [--savefig] [--zindex=<z-index of slice>] [--delzindex=<offset for subtracting image>] [--filter=<smoothing sigma>] [--filterx=<x-axis smoothing sigma>] [--filtery=<y-axis smoothing sigma>] [--filterz=<z-axis smoothing sigma>] [--min=<min of plot>] [--max=<max of plot>] -i '<filename1> <filename2>...'"
 
 ###### LIST OF OPTIONAL ARGUMENTS:
 ###  --savearray is a flag indicating you want to also save the 2D slice as a .npy file.
+###  --savefig lets you save the sliceplot figure
 ###  --zindex= lets you specify which array index cut through the z axis (usualy the LOS axis).  DEFAULT is the midpoint, i.e. DIM/2
 ###  --delzindex= if this is specified, then we will plot the difference between slices at array[:,:,zindex] - array[:,:,zindex+delzindex]
 ###  --filter= allows you to smooth the array with a Gaussian filter with the specified standard deviation (in units of array cells).  DEFAULT is no smoothing.
@@ -63,44 +64,47 @@ z_index = -1
 minrange = 1e5
 maxrange = -1e5
 crop_size = 0
-savefile = 0
+save_array = 0
+save_fig = 0
 del_z_index = int(0)
 
 # check for optional arguments
 if(1):
-  try:
-    opts, args = getopt.getopt(sys.argv[1:],"u:f:x:z:y:i:", ["filter=", "filterx=", "filtery=", "filterz=", "fx=", "fy=", "fz=", "zindex=", "min=", "max=", "savearray", "crop=", "delzindex="])
-  except getopt.GetoptError:
-    print USAGE
-    sys.exit(2)
-  for opt, arg in opts:
-#    print opt,arg
-    if opt in ("-u", "--u", "-h", "--h", "--help"):
-      print USAGE
-      sys.exit()
-    elif opt in ("-x", "-filterx", "--filterx"):
-      x_sigma = float(arg)
-    elif opt in ("-y", "-filtery", "--filtery"):
-      y_sigma = float(arg)
-    elif opt in ("-z", "-filterz", "--filterz"):
-      z_sigma = float(arg)
-    elif opt in ("-f", "--f", "-filter", "--filter"):
-      iso_sigma = float(arg)
-    elif opt in ("-i", "--i"):
-      files_in = arg
-      files_in = files_in.split()
-    elif opt in ("-zindex", "--zindex"):
-      z_index = int(arg)
-    elif opt in ("-delzindex", "--delzindex"):
-      del_z_index = int(arg)
-    elif opt in ("-min", "--min"):
-      minrange = float(arg)
-    elif opt in ("-max", "--max"):
-      maxrange = float(arg)
-    elif opt in ("--crop="):
-        crop_size = int(arg)
-    elif opt in ("--savearray"):
-      savefile = 1
+    try:
+        opts, args = getopt.getopt(sys.argv[1:],"u:f:x:z:y:i:", ["filter=", "filterx=", "filtery=", "filterz=", "fx=", "fy=", "fz=", "zindex=", "min=", "max=", "savearray", "savefig", "delzindex="])
+    except getopt.GetoptError:
+        print USAGE
+        sys.exit(2)
+    for opt, arg in opts:
+        #    print opt,arg
+        if opt in ("-u", "--u", "-h", "--h", "--help"):
+            print USAGE
+            sys.exit()
+        elif opt in ("-x", "-filterx", "--filterx"):
+            x_sigma = float(arg)
+        elif opt in ("-y", "-filtery", "--filtery"):
+            y_sigma = float(arg)
+        elif opt in ("-z", "-filterz", "--filterz"):
+            z_sigma = float(arg)
+        elif opt in ("-f", "--f", "-filter", "--filter"):
+            iso_sigma = float(arg)
+        elif opt in ("-i", "--i"):
+            files_in = arg
+            files_in = files_in.split()
+        elif opt in ("-zindex", "--zindex"):
+            z_index = int(arg)
+        elif opt in ("-delzindex", "--delzindex"):
+            del_z_index = int(arg)
+        elif opt in ("-min", "--min"):
+            minrange = float(arg)
+        elif opt in ("-max", "--max"):
+            maxrange = float(arg)
+        elif opt in ("--crop="):
+            crop_size = int(arg)
+        elif opt in ("--savearray"):
+            save_array = 1
+        elif opt in ("--savefig"):
+            save_fig = 1
 
 if not files_in:
     print "No files for processing... Have you included a '-i' flag before the filenames?\n"+USAGE
@@ -136,6 +140,8 @@ def smooth_field(data, iso_sigma, x_sigma, y_sigma, z_sigma):
     if iso_sigma > 0:
         print "Smoothing the entire cube with a Gassian filter of width="+str(iso_sigma)
         data =  sp.ndimage.filters.gaussian_filter(data, sigma=iso_sigma)
+        # k=Create_Kernel(iso_sigma)
+        # data = sp.ndimage.convolve(data, k, mode='constant', cval=0.0)
     else:
         if x_sigma > 0:
             print "Smoothing along the x (horizontal) axis with a Gassian filter of width="+str(x_sigma)
@@ -156,6 +162,20 @@ def crop(data, length):
         return data[:length,:length,:length]
     else:
         return data
+
+def Create_Kernel(radius):
+    '''
+    Creates 3d spherical kernel. Radius converted to int (rounds down) and made positive.
+    '''
+    radius=int(np.abs(radius))
+
+    kernel_matrix = np.zeros((2*radius+1, 2*radius+1, 2*radius+1))
+    x,y,z = np.ogrid[-radius:radius+1, -radius:radius+1, -radius:radius+1]
+    mask = x**2 + y**2 + z**2 <= radius**2
+    kernel_matrix[mask] = 1
+    kernel_matrix=kernel_matrix/kernel_matrix.sum()
+
+    return kernel_matrix
 
 
 # go through list of files and process each one
@@ -193,6 +213,7 @@ for path in files_in:
         print "Subtracting the slice at index="+str(other_z_index)
         the_slice = the_slice - data1[:,:,other_z_index]
 
+    ax = plt.subplot()
 
     # check box type to determine default plotting options
     # check if it is a 21cm brightness temperature box
@@ -207,12 +228,14 @@ for path in files_in:
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
         frame1.axes.get_yaxis().set_ticks([])
-        frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
+        # frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
         c_bar = fig.colorbar(c_dens, orientation='vertical')
-        c_bar.set_label(r'${\rm \delta T_b [\mathrm{mK}]}$', fontsize=24, rotation=-90, labelpad=32)
+        c_bar.set_label(r'${\rm \delta T_b (\mathrm{mK})}$', fontsize=16, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 8)
+        plt.title("21 cm brightness temperature", fontproperties=font_prop, size=16, verticalalignment='bottom')
+        fig_name = "del_T z7"
 
     # check if it is a neutral fraction box
     elif basename(filename)[0:3] == 'xH_':
@@ -229,8 +252,10 @@ for path in files_in:
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
         c_bar = fig.colorbar(c_dens, orientation='vertical')
-        c_bar.set_label(r'${\rm x_{HI}}$', fontsize=24, rotation=-90, labelpad=32)
+        c_bar.set_label(r'${\rm x_{HI}}$', fontsize=16, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 6)
+        # plt.title("Neutral fraction", size=16, verticalalignment='bottom')
+        fig_name = "xH z7"
 
     # check it is a density box
     elif basename(filename)[0:3] == 'upd':
@@ -239,7 +264,7 @@ for path in files_in:
         if maxrange < -1e4:
             maxrange = 0.5
         the_slice = np.log10(1+data1[:,:,z_index])
-        cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
+        cmap = LinearSegmentedColormap.from_list('mycmap', ['darkblue', 'blue', 'cyan', 'yellow', 'red', 'darkred'])
         norm = MidpointNormalize(midpoint=0)
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
@@ -248,17 +273,19 @@ for path in files_in:
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
         c_bar = fig.colorbar(c_dens, orientation='vertical')
-        c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=24, rotation=-90, labelpad=32)
+        c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=16, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 5)
+        # plt.title("Density", size=16, verticalalignment='bottom')
+        fig_name = "density z7"
 
     # check it is an Fcoll box
     elif basename(filename)[0:18] == 'Fcoll_output_file_':
-        the_slice = np.log10(1 + the_slice)
+        # the_slice = np.log10(1 + the_slice)
         if minrange > 1e4:
             minrange = 0.
         if maxrange < -1e4:
-            maxrange = 0.05
-        cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white'])
+            maxrange = 1.
+        cmap = LinearSegmentedColormap.from_list('mycmap', ['black', 'red', 'yellow', 'white', 'white', 'white'])
         norm = MidpointNormalize(midpoint=maxrange/2.)
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
@@ -267,8 +294,11 @@ for path in files_in:
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
         c_bar = fig.colorbar(c_dens, orientation='vertical')
-        c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
+        # c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
+        c_bar.set_label(r'${\rm f_{coll}}$', fontsize=16, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 5)
+        # plt.title("Collapse fraction", size=16, verticalalignment='bottom')
+        fig_name = "fcoll z7"
 
 
     c_bar.set_ticks(tick_array)
@@ -281,8 +311,12 @@ for path in files_in:
     else:
         endstr = '_zindex'+str(z_index)
     # plt.savefig(filename+endstr+'.png', bbox_inches='tight')
-    plt.show()
+
+    if save_fig:
+        plt.savefig(fig_name + ".png")#, dpi=200)
+    else:
+        plt.show()
 
     # do we want to save the array file?
-    if savefile:
+    if save_array:
         np.save(filename+endstr, the_slice)
