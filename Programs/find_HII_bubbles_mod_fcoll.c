@@ -393,7 +393,9 @@ int main(int argc, char ** argv){
                 }
             }
             f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll;
+            //ST_over_PS = mean_f_coll_st / f_coll;
+            //fprintf(stderr, "ST_over_PS = %f\n", ST_over_PS);
+            ST_over_PS = 1;
         }
         // else if !LAST_FILTER_STEP && we're operating on the density field
         else {
@@ -432,7 +434,9 @@ int main(int argc, char ** argv){
                 }
             }
             f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll;
+            //ST_over_PS = mean_f_coll_st / f_coll;
+            //fprintf(stderr, "ST_over_PS = %f\n", ST_over_PS);
+            ST_over_PS = 1;
             fprintf(LOG, "end f_coll normalization if, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
             fflush(LOG);
         }
