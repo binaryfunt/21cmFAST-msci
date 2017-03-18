@@ -11,4 +11,4 @@ Output_files
 Fcoll_output_file
 *.png
 *.pdf
-clear_boxes.cmd
+*.cmd
