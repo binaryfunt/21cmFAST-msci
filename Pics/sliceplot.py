@@ -234,7 +234,7 @@ for path in files_in:
         c_bar = fig.colorbar(c_dens, orientation='vertical')
         c_bar.set_label(r'${\rm \delta T_b (\mathrm{mK})}$', fontsize=16, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 8)
-        plt.title("21 cm brightness temperature", fontproperties=font_prop, size=16, verticalalignment='bottom')
+        # plt.title("21 cm brightness temperature", size=16, verticalalignment='bottom')
         fig_name = "del_T z7"
 
     # check if it is a neutral fraction box
