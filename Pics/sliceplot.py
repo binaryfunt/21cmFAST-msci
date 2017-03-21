@@ -111,7 +111,7 @@ if not files_in:
     sys.exit()
 
 
-def is_Fcoll(data, dim):
+def contains_fftw_padding(data, dim):
     """
     Check if the data is the Fcoll array based on its length
     """
@@ -126,7 +126,7 @@ def reshape_data(data, dim):
     """
     Reshapes the data depending on its dimensions
     """
-    if is_Fcoll(data, dim):
+    if contains_fftw_padding(data, dim):
         data.shape = (dim, dim, dim + 2)
         data = data[:,:,:-2]  # slice so same size as other boxes
     else:
@@ -279,7 +279,7 @@ for path in files_in:
         fig_name = "density z7"
 
     # check it is an Fcoll box
-    elif basename(filename)[0:18] == 'Fcoll_output_file_':
+    elif basename(filename)[0:5] == 'Fcoll':
         # the_slice = np.log10(1 + the_slice)
         if minrange > 1e4:
             minrange = 0.
