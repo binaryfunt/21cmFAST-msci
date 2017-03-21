@@ -111,7 +111,7 @@ if not files_in:
     sys.exit()
 
 
-def is_Fcoll(data, dim):
+def contains_fftw_padding(data, dim):
     """
     Check if the data is the Fcoll array based on its length
     """
@@ -126,7 +126,7 @@ def reshape_data(data, dim):
     """
     Reshapes the data depending on its dimensions
     """
-    if is_Fcoll(data, dim):
+    if contains_fftw_padding(data, dim):
         data.shape = (dim, dim, dim + 2)
         data = data[:,:,:-2]  # slice so same size as other boxes
     else:
