@@ -1,14 +1,33 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+import matplotlib.font_manager as font_manager
 import sys, getopt
 
-USAGE = "USAGE: Fcoll_histogram.py -i <Fcoll data file> [--number=<number of bins>] [--loglog] [--logy]"
+USAGE = "USAGE: Fcoll_histogram.py -i <Fcoll data file> [--number=<number of bins>] [--loglog] [--logy] [--savefig]"
+
+
+font_path = 'C:\Windows\Fonts\Roboto-Regular.ttf'
+font_prop = font_manager.FontProperties(fname=font_path, size=11)
+title_fontsize = 13
+tick_fontsize = 11
+def set_ax_font(ax):
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontproperties(font_prop)
+        label.set_fontsize(tick_fontsize)
+        # label.font_properties(font_prop)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+b = "#0066DD"
+g = "#00BB00"
+m = "#DD00FF"
+
 
 file_in = ""
 number = 50
 log_log = False
 log_y = False
+savefig = False
 
 def load_binary_data(filename, dtype=np.float32):
      """
@@ -33,7 +52,7 @@ def monomial(x, a, k):
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "h:i:n:", ["number=", "loglog", "logy"])
+    opts, args = getopt.getopt(sys.argv[1:], "h:i:n:", ["number=", "loglog", "logy", "savefig"])
 except getopt.GetoptError:
     print USAGE
     sys.exit(2)
@@ -50,6 +69,8 @@ for opt, arg in opts:
         log_log = True
     elif opt in ("--logy"):
         log_y = True
+    elif opt in ("--savefig"):
+        savefig = True
 if file_in == "":
     print USAGE
     sys.exit()
@@ -75,18 +96,25 @@ print 100. * float(freq[0]) / float(sum(freq)), "% in 1st bin"
 print 100. * float(freq[-1]) / float(sum(freq)), "% in last bin"
 
 fig = plt.figure()
-ax = plt.subplot()
+ax = plt.gca()
 
-plt.plot(bin_centres, freq, 'bo', label="Data")
+plt.plot(bin_centres, freq, marker='o', mec=b, mfc="w", linestyle="none", label="Data")
 plt.plot(bin_centres, monomial(bin_centres, *popt), 'r-', label="Fit")
 
-plt.xlabel("Collapse fraction")
-plt.ylabel("Frequency")
+plt.xlabel("Collapse fraction", fontproperties=font_prop)
+plt.ylabel("Frequency", fontproperties=font_prop)
 if log_log == True:
     ax.set_yscale("log")
     ax.set_xscale("log")
 elif log_y == True:
     ax.set_yscale("log")
-plt.legend()
+plt.title(r"21cmFAST ${\rm f_{coll}}$", fontproperties=font_prop, fontsize=title_fontsize, verticalalignment='bottom')
+plt.legend(prop=font_prop, frameon=False)
+set_ax_font(ax)
+plt.xlim(xmax=1.1)
 
-plt.show()
+if savefig == False:
+    plt.show()
+else:
+    plt.savefig("Fcoll_histogram.png", dpi=200, bbox_inches="tight")
+    plt.close()

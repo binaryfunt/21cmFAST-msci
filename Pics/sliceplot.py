@@ -25,10 +25,15 @@ import scipy as sp
 from matplotlib.ticker import *
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import Normalize
+import matplotlib.font_manager as font_manager
 from os.path import basename
 import os
 import sys, getopt
 
+font_path = 'C:\Windows\Fonts\Roboto-Regular.ttf'
+font_prop = font_manager.FontProperties(fname=font_path, size=14)
+title_fontsize = 13
+tick_fontsize = 11
 
 #To normalize the midpoint of the colorbar
 class MidpointNormalize(Normalize):
@@ -203,7 +208,10 @@ for path in files_in:
     data1 = smooth_field(data1, iso_sigma, x_sigma, y_sigma, z_sigma)
     data1 = crop(data1, crop_size)
 
-    fig = plt.figure(dpi=72)
+    if DIM <= 64:
+        fig = plt.figure(figsize=(4,3), dpi=72)
+    else:
+        fig = plt.figure(dpi=72)
     sub_fig = fig.add_subplot(111)
     print "Taking a slice along the LOS direction at index="+str(z_index)
     the_slice = data1[:,:,z_index]
@@ -231,11 +239,11 @@ for path in files_in:
         # frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
-        c_bar = fig.colorbar(c_dens, orientation='vertical')
-        c_bar.set_label(r'${\rm \delta T_b (\mathrm{mK})}$', fontsize=16, rotation=-90, labelpad=32)
+        c_bar = fig.colorbar(c_dens, orientation='vertical', pad=0.03)
+        c_bar.set_label(r'${\rm \delta T_b (\mathrm{mK})}$', fontsize=title_fontsize, fontproperties=font_prop, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 8)
-        # plt.title("21 cm brightness temperature", size=16, verticalalignment='bottom')
-        fig_name = "del_T z7"
+        plt.title("21 cm brightness temperature", size=title_fontsize, fontproperties=font_prop, verticalalignment='bottom')
+        fig_name = "del_T"
 
     # check if it is a neutral fraction box
     elif basename(filename)[0:3] == 'xH_':
@@ -251,11 +259,11 @@ for path in files_in:
         # frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
-        c_bar = fig.colorbar(c_dens, orientation='vertical')
-        c_bar.set_label(r'${\rm x_{HI}}$', fontsize=16, rotation=-90, labelpad=32)
+        c_bar = fig.colorbar(c_dens, orientation='vertical', pad=0.03)
+        c_bar.set_label(r'${\rm x_{HI}}$', fontsize=title_fontsize, fontproperties=font_prop, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 6)
-        # plt.title("Neutral fraction", size=16, verticalalignment='bottom')
-        fig_name = "xH z7"
+        plt.title("Neutral fraction", size=title_fontsize, fontproperties=font_prop, verticalalignment='bottom')
+        fig_name = "xH"
 
     # check it is a density box
     elif basename(filename)[0:3] == 'upd':
@@ -272,14 +280,14 @@ for path in files_in:
         # frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%(label), fontsize=20)
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
-        c_bar = fig.colorbar(c_dens, orientation='vertical')
-        c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=16, rotation=-90, labelpad=32)
+        c_bar = fig.colorbar(c_dens, orientation='vertical', pad=0.03)
+        c_bar.set_label(r'${\rm log(\Delta)}$', fontsize=title_fontsize, fontproperties=font_prop, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 5)
-        # plt.title("Density", size=16, verticalalignment='bottom')
-        fig_name = "density z7"
+        plt.title("Density", size=title_fontsize, fontproperties=font_prop, verticalalignment='bottom')
+        fig_name = "Density"
 
     # check it is an Fcoll box
-    elif basename(filename)[0:18] == 'Fcoll_output_file_':
+    elif basename(filename)[0:5] == 'Fcoll':
         # the_slice = np.log10(1 + the_slice)
         if minrange > 1e4:
             minrange = 0.
@@ -290,21 +298,22 @@ for path in files_in:
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_ticks([])
         frame1.axes.get_yaxis().set_ticks([])
-        # frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%("300Mpc"), fontsize=20)
+        # frame1.set_xlabel(r'${\rm\longleftarrow %s \longrightarrow}$'%("300Mpc"), fontsize=20, fontproperties=font_prop)
         c_dens = sub_fig.imshow(the_slice,cmap=cmap,norm=norm)
         c_dens.set_clim(vmin=minrange,vmax=maxrange)
-        c_bar = fig.colorbar(c_dens, orientation='vertical')
+        c_bar = fig.colorbar(c_dens, orientation='vertical', pad=0.03)
         # c_bar.set_label(r'${\rm log(f_{coll})}$', fontsize=24, rotation=-90, labelpad=32)
-        c_bar.set_label(r'${\rm f_{coll}}$', fontsize=16, rotation=-90, labelpad=32)
+        c_bar.set_label(r'${\rm f_{coll}}$', fontsize=title_fontsize, fontproperties=font_prop, rotation=-90, labelpad=32)
         tick_array = np.linspace(minrange, maxrange, 5)
-        # plt.title("Collapse fraction", size=16, verticalalignment='bottom')
-        fig_name = "fcoll z7"
+        plt.title("Collapse fraction", size=title_fontsize, fontproperties=font_prop, verticalalignment='bottom')
+        fig_name = "Fcoll"
 
 
     c_bar.set_ticks(tick_array)
 
-    for t in c_bar.ax.get_yticklabels():
-        t.set_fontsize(14)
+    for lbl in c_bar.ax.get_yticklabels():
+        lbl.set_fontproperties(font_prop)
+        lbl.set_fontsize(tick_fontsize)
 
     if del_z_index:
         endstr = '_zindex'+str(z_index)+'-'+str(z_index+del_z_index)
@@ -313,7 +322,8 @@ for path in files_in:
     # plt.savefig(filename+endstr+'.png', bbox_inches='tight')
 
     if save_fig:
-        plt.savefig(fig_name + ".png")#, dpi=200)
+        plt.savefig(fig_name + "_" + str(DIM) + "_" + label + ".png", dpi=200, bbox_inches="tight")
+        plt.close()
     else:
         plt.show()
 
