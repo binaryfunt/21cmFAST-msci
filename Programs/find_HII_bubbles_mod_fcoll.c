@@ -262,7 +262,7 @@ int main(int argc, char ** argv){
     // </Fcoll>
 
     // <Fcoll>
-    sprintf(filename, "../Boxes/Fcoll_output_file_CUBE_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+    sprintf(filename, "../Boxes/Fcoll_output_file_CUBE_z%06.2f_MODES_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
     F = fopen(filename, "rb");
     if (!F) {
         fprintf(stderr, "find_HII_bubbles_mod_fcoll: Unable to open file: %s\n", filename);
@@ -342,7 +342,7 @@ int main(int argc, char ** argv){
 
         if (LAST_FILTER_STEP) {
             // <Fcoll>
-            sprintf(filename, "../Boxes/Fcoll_output_file_CUBE_z%06.2f_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
+            sprintf(filename, "../Boxes/Fcoll_output_file_CUBE_z%06.2f_MODES_%i_%.0fMpc", REDSHIFT, HII_DIM, BOX_LEN);
             F = fopen(filename, "rb");
             if (!F) {
                 fprintf(stderr, "find_HII_bubbles_mod_fcoll: ERROR: unable to open file %s\n", filename);
@@ -578,7 +578,7 @@ int main(int argc, char ** argv){
     switch(FIND_BUBBLE_ALGORITHM) {
         case 2:
             if (!USE_HALO_FIELD) {
-                sprintf(filename, "../Boxes/xH_nohalos_FIRST_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
+                sprintf(filename, "../Boxes/xH_nohalos_MODES_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
             }
             break;
         default:
