@@ -1,5 +1,8 @@
+USAGE = "run trim_Fcoll.py -i <Fcoll file in (box)>"
+
 import numpy as np
 import sys
+import getopt
 
 def load_binary_data(filename, dtype=np.float32):
      """
@@ -33,17 +36,37 @@ def reshape_data(data, dim):
     data = data[:,:,:-2]  # slice so same size as other boxes
 
     data = data.copy(order='C')
-
     return data
 
 
-in_path = "C:/Users/Ronnie/Documents/21cmFAST-msci/Boxes/Fcoll_output_file_z007.50_64_75Mpc"
-DIM = 64
-out_path = "C:/Users/Ronnie/Documents/21cmFAST-msci/Boxes/Fcoll_output_file_CUBE_z007.50_64_75Mpc"
+in_path = ""
 
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "h:i:")
+except getopt.GetoptError:
+    print USAGE
+    sys.exit(2)
+# print opts, args
+for opt, arg in opts:
+    if opt in ("-h", "--h", "--help"):
+        print USAGE
+        sys.exit()
+    elif opt in ("-i"):
+        in_path = arg
+if in_path == "":
+    print "USAGE:", USAGE
+    sys.exit()
+
+DIM = int("" + in_path.split("_")[-2])
+label = str("" + in_path.split("_")[-1])
+if in_path[-3:] == "Mpc":
+    datafile_split = in_path.split("_")
+    out_path = "_".join(datafile_split[:-2]) + "_CUBE_" + "_".join(datafile_split[-2:])
+else:
+    out_path = in_path + "CUBE"
 
 Fcoll = load_binary_data(in_path)
-print Fcoll.flags
+# print Fcoll.flags
 Fcoll = reshape_data(Fcoll, DIM)
-print Fcoll.flags
+# print Fcoll.flags
 write_binary_data(out_path, Fcoll)
