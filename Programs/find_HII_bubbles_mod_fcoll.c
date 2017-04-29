@@ -87,7 +87,7 @@ int main(int argc, char ** argv){
     char filename[300];
     FILE *F, *pPipe;
     float REDSHIFT, mass, R, xf, yf, zf, growth_factor, pixel_mass, cell_length_factor;
-    float ave_N_min_cell, ION_EFF_FACTOR, M_MIN, ALPHA;
+    float ave_N_min_cell, ION_EFF_FACTOR, M_MIN, ALPHA, MOD_ION_EFF;
     int x,y,z, N_min_cell, LAST_FILTER_STEP, num_th, arg_offset, i,j,k;
     unsigned long long ct, ion_ct, sample_ct;
     float f_coll_crit, pixel_volume, density_over_mean, erfc_num, erfc_denom, erfc_denom_cell, res_xH, Splined_Fcoll;
@@ -150,7 +150,8 @@ int main(int argc, char ** argv){
     growth_factor = dicke(REDSHIFT);
     pixel_volume = pow(BOX_LEN/(float)HII_DIM, 3);
     pixel_mass = RtoM(L_FACTOR * BOX_LEN / (float)HII_DIM);
-    f_coll_crit = 1 / ION_EFF_FACTOR;
+    MOD_ION_EFF = 1.1 * ION_EFF_FACTOR;
+    f_coll_crit = 1 / MOD_ION_EFF;
     cell_length_factor = L_FACTOR;
 
     init_21cmMC_arrays();
@@ -224,12 +225,12 @@ int main(int argc, char ** argv){
         switch(FIND_BUBBLE_ALGORITHM) {
             case 2:
                 if (!USE_HALO_FIELD) {
-                    sprintf(filename, "../Boxes/xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
+                    sprintf(filename, "../Boxes/xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, MOD_ION_EFF, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
                 }
                 break;
             default:
                 if (!USE_HALO_FIELD) {
-                    sprintf(filename, "../Boxes/sphere_xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
+                    sprintf(filename, "../Boxes/sphere_xH_nohalos_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, MOD_ION_EFF, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
                 }
         }
         F = fopen(filename, "wb");
@@ -393,7 +394,7 @@ int main(int argc, char ** argv){
                 }
             }
             f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll; -----------------------
+            ST_over_PS = mean_f_coll_st / f_coll; //-----------------------
         }
         // else if !LAST_FILTER_STEP && we're operating on the density field
         else {
@@ -432,7 +433,7 @@ int main(int argc, char ** argv){
                 }
             }
             f_coll /= (double) HII_TOT_NUM_PIXELS;
-            ST_over_PS = mean_f_coll_st / f_coll; ------------------
+            ST_over_PS = mean_f_coll_st / f_coll; //------------------
             fprintf(LOG, "end f_coll normalization if, clock=%06.2f\n", (double)clock()/CLOCKS_PER_SEC);
             fflush(LOG);
         }
@@ -547,7 +548,7 @@ int main(int argc, char ** argv){
                         if (f_coll > 1) {
                             f_coll = 1;
                         }
-                        res_xH = xHI_from_xrays - f_coll * ION_EFF_FACTOR;
+                        res_xH = xHI_from_xrays - f_coll * MOD_ION_EFF;
                         // and make sure fraction doesn't blow up for underdense pixels
                         if (res_xH < 0) {
                             res_xH = 0;
@@ -578,12 +579,12 @@ int main(int argc, char ** argv){
     switch(FIND_BUBBLE_ALGORITHM) {
         case 2:
             if (!USE_HALO_FIELD) {
-                sprintf(filename, "../Boxes/xH_nohalos_MODES_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
+                sprintf(filename, "../Boxes/xH_nohalos_MODES_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, MOD_ION_EFF, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
             }
             break;
         default:
             if (!USE_HALO_FIELD) {
-                sprintf(filename, "../Boxes/sphere_xH_nohalos_FIRST_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, ION_EFF_FACTOR, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
+                sprintf(filename, "../Boxes/sphere_xH_nohalos_FIRST_z%06.2f_nf%f_eff%.1f_effPLindex%.1f_HIIfilter%i_Mmin%.1e_RHIImax%.0f_%i_%.0fMpc", REDSHIFT, global_xH, MOD_ION_EFF, ALPHA, HII_FILTER, M_MIN, MFP, HII_DIM, BOX_LEN);
             }
     }
     F = fopen(filename, "wb");
